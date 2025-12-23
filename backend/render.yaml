@@ -1,0 +1,45 @@
+# render.yaml - Configuración de Render para Backend Sistema Courier SaaS
+# Documentación: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: sistema-courier-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: SENDGRID_FROM_EMAIL
+        sync: false
+      - key: SINPE_PHONE_NUMBER
+        sync: false
+      - key: SINPE_BANK_NAME
+        sync: false
+      - key: SINPE_HOLDER_NAME
+        sync: false
