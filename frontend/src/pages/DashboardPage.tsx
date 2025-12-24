@@ -1,140 +1,238 @@
 // DashboardPage.tsx - Dashboard principal con branding dinámico
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTenant } from '../contexts/TenantContext';
 import {
-    Package,
-    Truck,
-    Users,
-    DollarSign,
-    TrendingUp,
-    AlertCircle,
-    Clock,
-    CheckCircle
+  Package,
+  Truck,
+  Users,
+  DollarSign,
+  TrendingUp,
+  AlertCircle,
+  Clock,
+  CheckCircle
 } from 'lucide-react';
 
+interface DashboardStats {
+  packagesToday: number;
+  packagesInTransit: number;
+  activeClients: number;
+  monthlyRevenue: number;
+}
+
+interface RecentPackage {
+  id: string;
+  tracking_number: string;
+  client_name: string;
+  status: string;
+  created_at: string;
+}
+
 const DashboardPage: React.FC = () => {
-    const { tenant, isWhiteLabel } = useTenant();
-    const primaryColor = tenant?.branding?.primary_color || '#3b82f6';
+  const { tenant, isWhiteLabel } = useTenant();
+  const primaryColor = tenant?.branding?.primary_color || '#3b82f6';
 
-    // Datos de ejemplo (en producción vendrían de la API)
-    const stats = [
-        { icon: Package, label: 'Paquetes Hoy', value: '127', color: primaryColor },
-        { icon: Truck, label: 'En Tránsito', value: '45', color: '#10b981' },
-        { icon: Users, label: 'Clientes Activos', value: '1,234', color: '#8b5cf6' },
-        { icon: DollarSign, label: 'Ingresos Mes', value: '$45,890', color: '#f59e0b' }
-    ];
+  const [stats, setStats] = useState<DashboardStats>({
+    packagesToday: 0,
+    packagesInTransit: 0,
+    activeClients: 0,
+    monthlyRevenue: 0
+  });
+  const [recentPackages, setRecentPackages] = useState<RecentPackage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const recentPackages = [
-        { id: 'PKG-001', client: 'Juan Pérez', status: 'En tránsito', time: 'Hace 5 min' },
-        { id: 'PKG-002', client: 'María García', status: 'Entregado', time: 'Hace 15 min' },
-        { id: 'PKG-003', client: 'Carlos López', status: 'En bodega', time: 'Hace 30 min' },
-        { id: 'PKG-004', client: 'Ana Martínez', status: 'Pendiente', time: 'Hace 1 hora' }
-    ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, [tenant]);
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'Entregado': return <CheckCircle size={16} className="status-icon success" />;
-            case 'En tránsito': return <Truck size={16} className="status-icon warning" />;
-            case 'En bodega': return <Package size={16} className="status-icon info" />;
-            default: return <Clock size={16} className="status-icon pending" />;
+  const fetchDashboardData = async () => {
+    if (!tenant) return;
+
+    try {
+      setLoading(true);
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      // Fetch stats
+      const statsRes = await fetch(`${apiUrl}/api/dashboard/stats`, {
+        headers: {
+          'X-Tenant-ID': tenant.id
         }
+      });
+      const statsData = await statsRes.json();
+      setStats(statsData);
+
+      // Fetch recent packages
+      const packagesRes = await fetch(`${apiUrl}/api/dashboard/recent-packages`, {
+        headers: {
+          'X-Tenant-ID': tenant.id
+        }
+      });
+      const packagesData = await packagesRes.json();
+      setRecentPackages(packagesData);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: 'CRC',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'Hace un momento';
+    if (diffMins < 60) return `Hace ${diffMins} min`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const statusMap: Record<string, string> = {
+      'pending': 'Pendiente',
+      'processing': 'Procesando',
+      'assigned': 'Asignado',
+      'in_transit': 'En tránsito',
+      'out_for_delivery': 'En reparto',
+      'delivered': 'Entregado',
+      'cancelled': 'Cancelado'
     };
+    return statusMap[status] || status;
+  };
 
-    return (
-        <div className="dashboard">
-            {/* Header */}
-            <header className="dashboard-header">
-                <div className="header-left">
-                    {tenant?.branding?.logo_url ? (
-                        <img src={tenant.branding.logo_url} alt="Logo" className="header-logo" />
-                    ) : (
-                        <span className="header-title">{tenant?.branding?.company_name || 'Sistema Courier'}</span>
-                    )}
-                </div>
-                <div className="header-right">
-                    <span className="user-name">Admin</span>
-                    <button className="btn-logout">Cerrar Sesión</button>
-                </div>
-            </header>
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'delivered': return <CheckCircle size={16} className="status-icon success" />;
+      case 'in_transit':
+      case 'out_for_delivery': return <Truck size={16} className="status-icon warning" />;
+      case 'assigned':
+      case 'processing': return <Package size={16} className="status-icon info" />;
+      default: return <Clock size={16} className="status-icon pending" />;
+    }
+  };
 
-            {/* Main Content */}
-            <main className="dashboard-main">
-                {/* Stats Grid */}
-                <div className="stats-grid">
-                    {stats.map((stat, index) => (
-                        <div key={index} className="stat-card">
-                            <div className="stat-icon" style={{ backgroundColor: `${stat.color}20`, color: stat.color }}>
-                                <stat.icon size={24} />
-                            </div>
-                            <div className="stat-content">
-                                <div className="stat-value">{stat.value}</div>
-                                <div className="stat-label">{stat.label}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+  const statsCards = [
+    { icon: Package, label: 'Paquetes Hoy', value: stats.packagesToday.toString(), color: primaryColor },
+    { icon: Truck, label: 'En Tránsito', value: stats.packagesInTransit.toString(), color: '#10b981' },
+    { icon: Users, label: 'Clientes Activos', value: stats.activeClients.toString(), color: '#8b5cf6' },
+    { icon: DollarSign, label: 'Ingresos Mes', value: formatCurrency(stats.monthlyRevenue), color: '#f59e0b' }
+  ];
 
-                {/* Recent Activity */}
-                <div className="dashboard-grid">
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>Paquetes Recientes</h3>
-                            <a href="/packages" style={{ color: primaryColor }}>Ver todos</a>
-                        </div>
-                        <div className="card-content">
-                            {recentPackages.map((pkg, index) => (
-                                <div key={index} className="package-item">
-                                    <div className="package-info">
-                                        <span className="package-id">{pkg.id}</span>
-                                        <span className="package-client">{pkg.client}</span>
-                                    </div>
-                                    <div className="package-status">
-                                        {getStatusIcon(pkg.status)}
-                                        <span>{pkg.status}</span>
-                                    </div>
-                                    <span className="package-time">{pkg.time}</span>
-                                </div>
-                            ))}
-                        </div>
+  return (
+    <div className="dashboard">
+      {/* Header */}
+      <header className="dashboard-header">
+        <div className="header-left">
+          {tenant?.branding?.logo_url ? (
+            <img src={tenant.branding.logo_url} alt="Logo" className="header-logo" />
+          ) : (
+            <span className="header-title">{tenant?.branding?.company_name || 'Sistema Courier'}</span>
+          )}
+        </div>
+        <div className="header-right">
+          <span className="user-name">Admin</span>
+          <button className="btn-logout">Cerrar Sesión</button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="dashboard-main">
+        {/* Stats Grid */}
+        <div className="stats-grid">
+          {statsCards.map((stat, index) => (
+            <div key={index} className="stat-card">
+              <div className="stat-icon" style={{ backgroundColor: `${stat.color}20`, color: stat.color }}>
+                <stat.icon size={24} />
+              </div>
+              <div className="stat-content">
+                <div className="stat-value">{loading ? '...' : stat.value}</div>
+                <div className="stat-label">{stat.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="dashboard-grid">
+          <div className="card">
+            <div className="card-header">
+              <h3>Paquetes Recientes</h3>
+              <a href="/packages" style={{ color: primaryColor }}>Ver todos</a>
+            </div>
+            <div className="card-content">
+              {loading ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                  Cargando...
+                </div>
+              ) : recentPackages.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                  No hay paquetes recientes
+                </div>
+              ) : (
+                recentPackages.slice(0, 4).map((pkg) => (
+                  <div key={pkg.id} className="package-item">
+                    <div className="package-info">
+                      <span className="package-id">{pkg.tracking_number}</span>
+                      <span className="package-client">{pkg.client_name || 'Sin cliente'}</span>
                     </div>
-
-                    <div className="card">
-                        <div className="card-header">
-                            <h3>Rendimiento</h3>
-                            <TrendingUp size={20} style={{ color: '#10b981' }} />
-                        </div>
-                        <div className="card-content performance-grid">
-                            <div className="performance-item">
-                                <span className="perf-label">Entregas a tiempo</span>
-                                <span className="perf-value success">94%</span>
-                            </div>
-                            <div className="performance-item">
-                                <span className="perf-label">Satisfacción cliente</span>
-                                <span className="perf-value success">4.8/5</span>
-                            </div>
-                            <div className="performance-item">
-                                <span className="perf-label">Incidentes</span>
-                                <span className="perf-value warning">3</span>
-                            </div>
-                            <div className="performance-item">
-                                <span className="perf-label">Tiempo promedio entrega</span>
-                                <span className="perf-value">2.3 días</span>
-                            </div>
-                        </div>
+                    <div className="package-status">
+                      {getStatusIcon(pkg.status)}
+                      <span>{getStatusLabel(pkg.status)}</span>
                     </div>
-                </div>
+                    <span className="package-time">{getTimeAgo(pkg.created_at)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header">
+              <h3>Rendimiento</h3>
+              <TrendingUp size={20} style={{ color: '#10b981' }} />
+            </div>
+            <div className="card-content performance-grid">
+              <div className="performance-item">
+                <span className="perf-label">Entregas a tiempo</span>
+                <span className="perf-value success">94%</span>
+              </div>
+              <div className="performance-item">
+                <span className="perf-label">Satisfacción cliente</span>
+                <span className="perf-value success">4.8/5</span>
+              </div>
+              <div className="performance-item">
+                <span className="perf-label">Incidentes</span>
+                <span className="perf-value warning">3</span>
+              </div>
+              <div className="performance-item">
+                <span className="perf-label">Tiempo promedio entrega</span>
+                <span className="perf-value">2.3 días</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                {/* Trial Notice - solo si está en trial */}
-                {tenant?.status === 'trial' && (
-                    <div className="trial-notice">
-                        <AlertCircle size={20} />
-                        <span>Tu período de prueba termina pronto. </span>
-                        <a href="/account/billing" style={{ color: primaryColor }}>Actualizar plan</a>
-                    </div>
-                )}
-            </main>
+        {/* Trial Notice - solo si está en trial */}
+        {tenant?.status === 'trial' && (
+          <div className="trial-notice">
+            <AlertCircle size={20} />
+            <span>Tu período de prueba termina pronto. </span>
+            <a href="/account/billing" style={{ color: primaryColor }}>Actualizar plan</a>
+          </div>
+        )}
+      </main>
 
-            <style>{`
+      <style>{`
         .dashboard {
           min-height: 100vh;
           background: #f3f4f6;
@@ -356,8 +454,8 @@ const DashboardPage: React.FC = () => {
           font-weight: 600;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default DashboardPage;
