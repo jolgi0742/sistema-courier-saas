@@ -19,6 +19,7 @@ const couriersRoutes_1 = __importDefault(require("./routes/couriersRoutes"));
 const clientsRoutes_1 = __importDefault(require("./routes/clientsRoutes"));
 const sinpeRoutes_1 = __importDefault(require("./routes/sinpeRoutes"));
 const paypalRoutes_1 = __importDefault(require("./routes/paypalRoutes"));
+const dashboardRoutes_1 = __importDefault(require("./routes/dashboardRoutes"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
 // Middleware de logging
@@ -64,6 +65,7 @@ app.use('/api/billing', billingRoutes_1.default);
 app.use('/api/super-admin', superAdminRoutes_1.default);
 app.use('/api/domains', domainRoutes_1.default);
 // Rutas de la API - Negocio (multi-tenant)
+app.use('/api/dashboard', dashboardRoutes_1.default);
 app.use('/api/packages', packagesRoutes_1.default);
 app.use('/api/couriers', couriersRoutes_1.default);
 app.use('/api/clients', clientsRoutes_1.default);

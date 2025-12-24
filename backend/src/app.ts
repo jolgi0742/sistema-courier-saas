@@ -16,6 +16,7 @@ import couriersRoutes from './routes/couriersRoutes';
 import clientsRoutes from './routes/clientsRoutes';
 import sinpeRoutes from './routes/sinpeRoutes';
 import paypalRoutes from './routes/paypalRoutes';
+import dashboardRoutes from './routes/dashboardRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -70,6 +71,7 @@ app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/domains', domainRoutes);
 
 // Rutas de la API - Negocio (multi-tenant)
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/packages', packagesRoutes);
 app.use('/api/couriers', couriersRoutes);
 app.use('/api/clients', clientsRoutes);
