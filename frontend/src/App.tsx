@@ -14,6 +14,7 @@ import OnboardingWizard from './pages/public/OnboardingWizard';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import PackagesPage from './pages/PackagesPage';
+import NewPackagePage from './pages/NewPackagePage';
 import TenantLoadingPage from './pages/TenantLoadingPage';
 import TenantErrorPage from './pages/TenantErrorPage';
 
@@ -79,6 +80,12 @@ const App: React.FC = () => {
                     <Route path="/packages" element={
                         <ProtectedRoute>
                             <PackagesPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/packages/new" element={
+                        <ProtectedRoute>
+                            <NewPackagePage />
                         </ProtectedRoute>
                     } />
 
