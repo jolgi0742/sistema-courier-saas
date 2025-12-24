@@ -93,12 +93,27 @@ router.get('/by-domain/:domain', async (req, res) => {
             return res.status(404).json({ error: 'Dominio no encontrado' });
         }
         const branding = await brandingService_1.BrandingService.getByTenantId(tenant.id);
+        // Obtener plan
+        const [planRows] = await (await Promise.resolve().then(() => __importStar(require('../config/database')))).default.execute('SELECT * FROM plans WHERE id = ?', [tenant.plan_id]);
+        const plan = planRows[0];
         res.json({
             id: tenant.id,
             name: tenant.name,
             subdomain: tenant.subdomain,
             status: tenant.status,
-            branding,
+            trial_ends_at: tenant.trial_ends_at,
+            plan: plan ? {
+                id: plan.id,
+                name: plan.name,
+                limits: JSON.parse(plan.limits || '{}'),
+                features: JSON.parse(plan.features || '[]')
+            } : null,
+            branding: branding || {
+                primary_color: '#3B82F6',
+                secondary_color: '#1E40AF',
+                accent_color: '#10B981',
+                company_name: tenant.name
+            },
             has_custom_domain: true,
             custom_domain: domain
         });
