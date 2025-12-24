@@ -64,8 +64,8 @@ router.get('/by-subdomain/:subdomain', async (req, res) => {
             plan: plan ? {
                 id: plan.id,
                 name: plan.name,
-                limits: JSON.parse(plan.limits || '{}'),
-                features: JSON.parse(plan.features || '[]')
+                limits: plan.limits || {},
+                features: plan.features || []
             } : null,
             branding: branding || {
                 primary_color: '#3B82F6',
@@ -105,8 +105,8 @@ router.get('/by-domain/:domain', async (req, res) => {
             plan: plan ? {
                 id: plan.id,
                 name: plan.name,
-                limits: JSON.parse(plan.limits || '{}'),
-                features: JSON.parse(plan.features || '[]')
+                limits: plan.limits || {},
+                features: plan.features || []
             } : null,
             branding: branding || {
                 primary_color: '#3B82F6',
