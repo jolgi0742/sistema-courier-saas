@@ -13,6 +13,7 @@ import OnboardingWizard from './pages/public/OnboardingWizard';
 // Páginas de Tenant
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import PackagesPage from './pages/PackagesPage';
 import TenantLoadingPage from './pages/TenantLoadingPage';
 import TenantErrorPage from './pages/TenantErrorPage';
 
@@ -72,6 +73,12 @@ const App: React.FC = () => {
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
                             <DashboardPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/packages" element={
+                        <ProtectedRoute>
+                            <PackagesPage />
                         </ProtectedRoute>
                     } />
 
