@@ -1,7 +1,7 @@
 // arrivalsService.ts - Servicio para registro de llegadas de paquetes
 import pool from '../config/database';
 import { v4 as uuidv4 } from 'uuid';
-import { PackageService } from './packageService';
+import PackagesService from './packagesService';
 
 export interface PackageArrival {
     id: string;

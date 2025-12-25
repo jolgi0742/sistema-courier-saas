@@ -7,7 +7,6 @@ exports.ArrivalsService = void 0;
 // arrivalsService.ts - Servicio para registro de llegadas de paquetes
 const database_1 = __importDefault(require("../config/database"));
 const uuid_1 = require("uuid");
-const packageService_1 = require("./packageService");
 class ArrivalsService {
     /**
      * Obtener todas las llegadas
@@ -69,7 +68,7 @@ class ArrivalsService {
         let packageId = data.packageId;
         // Si se proporciona tracking number, buscar el paquete
         if (!packageId && data.trackingNumber) {
-            const pkg = await packageService_1.PackageService.getByTracking(data.trackingNumber, tenantId);
+            const pkg = await PackageService.getByTracking(data.trackingNumber, tenantId);
             if (!pkg) {
                 throw new Error('Paquete no encontrado');
             }
@@ -90,7 +89,7 @@ class ArrivalsService {
             data.notes || null
         ]);
         // Actualizar estado del paquete a "in_warehouse"
-        await packageService_1.PackageService.updateStatus(packageId, 'in_warehouse', tenantId);
+        await PackageService.updateStatus(packageId, 'in_warehouse', tenantId);
         return this.getById(id, tenantId);
     }
     /**
