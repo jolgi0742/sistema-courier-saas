@@ -29,6 +29,7 @@ const vehiclesRoutes_1 = __importDefault(require("./routes/vehiclesRoutes"));
 const maintenanceRoutes_1 = __importDefault(require("./routes/maintenanceRoutes"));
 const documentsRoutes_1 = __importDefault(require("./routes/documentsRoutes"));
 const warehouseRoutes_1 = __importDefault(require("./routes/warehouseRoutes"));
+const arrivalsRoutes_1 = __importDefault(require("./routes/arrivalsRoutes"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
 // Middleware de logging
@@ -87,6 +88,7 @@ app.use('/api/vehicles', vehiclesRoutes_1.default);
 app.use('/api/maintenance', maintenanceRoutes_1.default);
 app.use('/api/documents', documentsRoutes_1.default);
 app.use('/api/warehouse', warehouseRoutes_1.default);
+app.use('/api/arrivals', arrivalsRoutes_1.default);
 app.use('/api/sinpe', sinpeRoutes_1.default);
 app.use('/api/paypal', paypalRoutes_1.default);
 // Ruta 404
