@@ -15,6 +15,9 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import PackagesPage from './pages/PackagesPage';
 import NewPackagePage from './pages/NewPackagePage';
+import PackageDetailPage from './pages/PackageDetailPage';
+import ClientsPage from './pages/ClientsPage';
+import CouriersPage from './pages/CouriersPage';
 import TenantLoadingPage from './pages/TenantLoadingPage';
 import TenantErrorPage from './pages/TenantErrorPage';
 
@@ -86,6 +89,24 @@ const App: React.FC = () => {
                     <Route path="/packages/new" element={
                         <ProtectedRoute>
                             <NewPackagePage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/packages/:id" element={
+                        <ProtectedRoute>
+                            <PackageDetailPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/clients" element={
+                        <ProtectedRoute>
+                            <ClientsPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/couriers" element={
+                        <ProtectedRoute>
+                            <CouriersPage />
                         </ProtectedRoute>
                     } />
 

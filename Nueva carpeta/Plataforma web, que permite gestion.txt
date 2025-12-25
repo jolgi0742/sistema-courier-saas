@@ -1,0 +1,15 @@
+Plataforma web, que permite gestionar el servicio de Casillero Internacional a un destino, con opcion a Agregar multiple modulos AGENTES Incluye
+1.- Registro de Cliente online ( Planilla de Registro )
+2.- Panel del Cliente
+3.- Modulo Operativo
+4.- Modulo Agente Permite Manejo de PREALERTAS de clientes
+Manejo de Verificación documental
+Opción de Consolidación de paquetes por cliente
+Opción de Agrupamiento de paquetes por cliente
+Creación de Master Guía, con reportes de la paquetería por envío
+Actualización de Estatus de la paquetería
+Notificaciones al cliente vía email
+Facturación y cobranza del servicio
+
+
+un dashboard para un sistema de manejo de paquetería tipo Courier, con diferentes módulos y que sea responsive. Voy a crear un prototipo de interface HTML que te muestre cómo podría ser este sistema.

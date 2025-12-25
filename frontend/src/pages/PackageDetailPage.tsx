@@ -1,0 +1,322 @@
+// PackageDetailPage.tsx - Vista de detalle de paquete
+import React, { useState, useEffect } from 'react';
+import { useTenant } from '../contexts/TenantContext';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Edit, Truck, Clock, CheckCircle, MapPin } from 'lucide-react';
+
+interface PackageDetail {
+    id: string;
+    tracking_number: string;
+    client_name: string;
+    courier_name: string | null;
+    sender_name: string;
+    sender_phone: string;
+    recipient_name: string;
+    recipient_phone: string;
+    recipient_address: string;
+    weight: number;
+    dimensions: string | null;
+    declared_value: number;
+    status: string;
+    notes: string | null;
+    created_at: string;
+    delivered_at: string | null;
+}
+
+interface HistoryItem {
+    id: string;
+    status: string;
+    notes: string;
+    location: string | null;
+    created_at: string;
+}
+
+const PackageDetailPage: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const { tenant } = useTenant();
+    const navigate = useNavigate();
+    const [pkg, setPkg] = useState<PackageDetail | null>(null);
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (tenant && id) {
+            fetchPackageDetail();
+        }
+    }, [tenant, id]);
+
+    const fetchPackageDetail = async () => {
+        if (!tenant || !id) return;
+
+        try {
+            setLoading(true);
+            const apiUrl = import.meta.env.VITE_API_URL;
+
+            // Fetch package details
+            const pkgRes = await fetch(`${apiUrl}/api/packages/${id}`, {
+                headers: { 'X-Tenant-ID': tenant.id }
+            });
+            const pkgData = await pkgRes.json();
+            setPkg(pkgData);
+
+            // Fetch history (if endpoint exists)
+            // const histRes = await fetch(`${apiUrl}/api/packages/${id}/history`, {
+            //     headers: { 'X-Tenant-ID': tenant.id }
+            // });
+            // const histData = await histRes.json();
+            // setHistory(histData);
+
+        } catch (error) {
+            console.error('Error fetching package:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getStatusBadge = (status: string) => {
+        const statusConfig: Record<string, { label: string; color: string }> = {
+            'pending': { label: 'Pendiente', color: '#6b7280' },
+            'processing': { label: 'Procesando', color: '#3b82f6' },
+            'assigned': { label: 'Asignado', color: '#8b5cf6' },
+            'in_transit': { label: 'En tránsito', color: '#f59e0b' },
+            'out_for_delivery': { label: 'En reparto', color: '#10b981' },
+            'delivered': { label: 'Entregado', color: '#059669' },
+            'cancelled': { label: 'Cancelado', color: '#ef4444' }
+        };
+
+        const config = statusConfig[status] || { label: status, color: '#6b7280' };
+
+        return (
+            <span style={{
+                padding: '6px 16px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                backgroundColor: `${config.color}20`,
+                color: config.color
+            }}>
+                {config.label}
+            </span>
+        );
+    };
+
+    if (loading) {
+        return <div className="loading-page">Cargando...</div>;
+    }
+
+    if (!pkg) {
+        return <div className="error-page">Paquete no encontrado</div>;
+    }
+
+    return (
+        <div className="package-detail-page">
+            {/* Header */}
+            <div className="page-header">
+                <button className="btn-back" onClick={() => navigate('/packages')}>
+                    <ArrowLeft size={20} />
+                    Volver
+                </button>
+                <div className="header-info">
+                    <h1>{pkg.tracking_number}</h1>
+                    {getStatusBadge(pkg.status)}
+                </div>
+                <button
+                    className="btn-edit"
+                    onClick={() => navigate(`/packages/${id}/edit`)}
+                >
+                    <Edit size={20} />
+                    Editar
+                </button>
+            </div>
+
+            <div className="detail-grid">
+                {/* Información General */}
+                <div className="detail-card">
+                    <h2>Información General</h2>
+                    <div className="detail-row">
+                        <span className="label">Cliente:</span>
+                        <span className="value">{pkg.client_name}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Courier:</span>
+                        <span className="value">{pkg.courier_name || 'Sin asignar'}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Peso:</span>
+                        <span className="value">{pkg.weight} kg</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Dimensiones:</span>
+                        <span className="value">{pkg.dimensions || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Valor Declarado:</span>
+                        <span className="value">₡{pkg.declared_value.toLocaleString()}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Fecha Creación:</span>
+                        <span className="value">{new Date(pkg.created_at).toLocaleString('es-CR')}</span>
+                    </div>
+                    {pkg.delivered_at && (
+                        <div className="detail-row">
+                            <span className="label">Fecha Entrega:</span>
+                            <span className="value">{new Date(pkg.delivered_at).toLocaleString('es-CR')}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Remitente */}
+                <div className="detail-card">
+                    <h2>Remitente</h2>
+                    <div className="detail-row">
+                        <span className="label">Nombre:</span>
+                        <span className="value">{pkg.sender_name}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Teléfono:</span>
+                        <span className="value">{pkg.sender_phone}</span>
+                    </div>
+                </div>
+
+                {/* Destinatario */}
+                <div className="detail-card">
+                    <h2>Destinatario</h2>
+                    <div className="detail-row">
+                        <span className="label">Nombre:</span>
+                        <span className="value">{pkg.recipient_name}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Teléfono:</span>
+                        <span className="value">{pkg.recipient_phone}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="label">Dirección:</span>
+                        <span className="value">{pkg.recipient_address}</span>
+                    </div>
+                </div>
+
+                {/* Notas */}
+                {pkg.notes && (
+                    <div className="detail-card full-width">
+                        <h2>Notas</h2>
+                        <p>{pkg.notes}</p>
+                    </div>
+                )}
+            </div>
+
+            <style>{`
+                .package-detail-page {
+                    padding: 24px;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                }
+
+                .page-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+
+                .header-info {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+
+                .page-header h1 {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #1f2937;
+                    margin: 0;
+                }
+
+                .btn-back, .btn-edit {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 16px;
+                    background: white;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    color: #6b7280;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+
+                .btn-back:hover, .btn-edit:hover {
+                    background: #f3f4f6;
+                    color: #1f2937;
+                }
+
+                .btn-edit {
+                    background: ${tenant?.branding?.primary_color || '#3b82f6'};
+                    color: white;
+                    border: none;
+                }
+
+                .btn-edit:hover {
+                    opacity: 0.9;
+                }
+
+                .detail-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                    gap: 24px;
+                }
+
+                .detail-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 24px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .detail-card.full-width {
+                    grid-column: 1 / -1;
+                }
+
+                .detail-card h2 {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #1f2937;
+                    margin: 0 0 16px 0;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+
+                .detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #f3f4f6;
+                }
+
+                .detail-row:last-child {
+                    border-bottom: none;
+                }
+
+                .detail-row .label {
+                    font-weight: 500;
+                    color: #6b7280;
+                }
+
+                .detail-row .value {
+                    color: #1f2937;
+                    text-align: right;
+                }
+
+                .loading-page, .error-page {
+                    padding: 60px 20px;
+                    text-align: center;
+                    color: #6b7280;
+                    font-size: 18px;
+                }
+            `}</style>
+        </div>
+    );
+};
+
+export default PackageDetailPage;
