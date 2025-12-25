@@ -18,6 +18,7 @@ import sinpeRoutes from './routes/sinpeRoutes';
 import paypalRoutes from './routes/paypalRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import labelRoutes from './routes/labelRoutes';
+import deliverySignatureRoutes from './routes/deliverySignatureRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -77,6 +78,7 @@ app.use('/api/packages', packagesRoutes);
 app.use('/api/couriers', couriersRoutes);
 app.use('/api/clients', clientsRoutes);
 app.use('/api/labels', labelRoutes);
+app.use('/api/delivery-signature', deliverySignatureRoutes);
 app.use('/api/sinpe', sinpeRoutes);
 app.use('/api/paypal', paypalRoutes);
 

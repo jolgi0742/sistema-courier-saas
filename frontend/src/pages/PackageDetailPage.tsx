@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '../contexts/TenantContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Printer, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, Printer, FileText, CheckCircle } from 'lucide-react';
+import DeliverySignatureModal from '../components/DeliverySignatureModal';
 
 interface PackageDetail {
     id: string;
@@ -38,6 +39,7 @@ const PackageDetailPage: React.FC = () => {
     const [pkg, setPkg] = useState<PackageDetail | null>(null);
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
 
     useEffect(() => {
         if (tenant && id) {
@@ -181,6 +183,16 @@ const PackageDetailPage: React.FC = () => {
                         <FileText size={20} />
                         Nota
                     </button>
+                    {pkg.status !== 'delivered' && pkg.status !== 'cancelled' && (
+                        <button
+                            className="btn-deliver"
+                            onClick={() => setShowSignatureModal(true)}
+                            title="Confirmar Entrega"
+                        >
+                            <CheckCircle size={20} />
+                            Confirmar Entrega
+                        </button>
+                    )}
                     <button
                         className="btn-edit"
                         onClick={() => navigate(`/packages/${id}/edit`)}
@@ -266,6 +278,20 @@ const PackageDetailPage: React.FC = () => {
                 )}
             </div>
 
+            {/* Modal de Firma Digital */}
+            {showSignatureModal && (
+                <DeliverySignatureModal
+                    packageId={id!}
+                    trackingNumber={pkg.tracking_number}
+                    recipientName={pkg.recipient_name}
+                    onClose={() => setShowSignatureModal(false)}
+                    onSuccess={() => {
+                        setShowSignatureModal(false);
+                        fetchPackageDetail(); // Recargar datos
+                    }}
+                />
+            )}
+
             <style>{`
                 .package-detail-page {
                     padding: 24px;
@@ -294,7 +320,7 @@ const PackageDetailPage: React.FC = () => {
                     margin: 0;
                 }
 
-                .btn-back, .btn-edit, .btn-action {
+                .btn-back, .btn-edit, .btn-action, .btn-deliver {
                     display: flex;
                     align-items: center;
                     gap: 8px;
@@ -309,7 +335,7 @@ const PackageDetailPage: React.FC = () => {
                     font-size: 14px;
                 }
 
-                .btn-back:hover, .btn-edit:hover, .btn-action:hover {
+                .btn-back:hover, .btn-edit:hover, .btn-action:hover, .btn-deliver:hover {
                     background: #f3f4f6;
                     color: #1f2937;
                 }
@@ -317,6 +343,16 @@ const PackageDetailPage: React.FC = () => {
                 .header-actions {
                     display: flex;
                     gap: 12px;
+                }
+
+                .btn-deliver {
+                    background: #10b981;
+                    color: white;
+                    border: none;
+                }
+
+                .btn-deliver:hover {
+                    background: #059669;
                 }
 
                 .btn-edit {
