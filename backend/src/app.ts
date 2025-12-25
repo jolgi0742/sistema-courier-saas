@@ -54,6 +54,9 @@ app.use(cors({
         // Permitir subdominios de sistemacourier.com
         if (origin.includes('sistemacourier.com')) return callback(null, true);
 
+        // Permitir Render (frontend deployment)
+        if (origin.includes('onrender.com')) return callback(null, true);
+
         // Permitir dominios personalizados (TODO: verificar contra BD)
         callback(null, true);
     },
