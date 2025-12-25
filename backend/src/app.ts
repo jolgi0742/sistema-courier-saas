@@ -27,6 +27,7 @@ import maintenanceRoutes from './routes/maintenanceRoutes';
 import documentsRoutes from './routes/documentsRoutes';
 import warehouseRoutes from './routes/warehouseRoutes';
 import arrivalsRoutes from './routes/arrivalsRoutes';
+import manifestsRoutes from './routes/manifestsRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -95,6 +96,7 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/warehouse', warehouseRoutes);
 app.use('/api/arrivals', arrivalsRoutes);
+app.use('/api/manifests', manifestsRoutes);
 app.use('/api/sinpe', sinpeRoutes);
 app.use('/api/paypal', paypalRoutes);
 
