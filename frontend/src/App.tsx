@@ -24,6 +24,7 @@ import FuelPage from './pages/FuelPage';
 import VehiclesPage from './pages/VehiclesPage';
 import MaintenancePage from './pages/MaintenancePage';
 import DocumentsPage from './pages/DocumentsPage';
+import WarehousePage from './pages/WarehousePage';
 import TenantLoadingPage from './pages/TenantLoadingPage';
 import TenantErrorPage from './pages/TenantErrorPage';
 
@@ -149,6 +150,12 @@ const App: React.FC = () => {
                     <Route path="/documents" element={
                         <ProtectedRoute>
                             <DocumentsPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/warehouse" element={
+                        <ProtectedRoute>
+                            <WarehousePage />
                         </ProtectedRoute>
                     } />
 
