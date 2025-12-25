@@ -61,8 +61,13 @@ class FuelService {
      * Calcular eficiencia basado en odómetro anterior
      */
     static async calculateEfficiency(courierId, currentOdometer, liters, tenantId) {
+        const result = {
+            previousOdometer: null,
+            distanceTraveled: null,
+            efficiency: null
+        };
         if (!courierId || !currentOdometer) {
-            return { previousOdometer: null, distanceTraveled: null, efficiency: null };
+            return result;
         }
         // Obtener último registro del courier
         const [rows] = await database_1.default.execute(`SELECT odometer_reading 
@@ -72,12 +77,15 @@ class FuelService {
              LIMIT 1`, [courierId, tenantId]);
         const records = rows;
         if (records.length === 0) {
-            return { previousOdometer: null, distanceTraveled: null, efficiency: null };
+            return result;
         }
         const previousOdometer = records[0].odometer_reading;
         const distanceTraveled = currentOdometer - previousOdometer;
         const efficiency = distanceTraveled > 0 ? distanceTraveled / liters : null;
-        return { previousOdometer, distanceTraveled, efficiency };
+        result.previousOdometer = previousOdometer;
+        result.distanceTraveled = distanceTraveled;
+        result.efficiency = efficiency;
+        return result;
     }
     /**
      * Crear nuevo registro
@@ -87,7 +95,11 @@ class FuelService {
         // Calcular precio por litro si no se proporciona
         const pricePerLiter = data.price_per_liter || (data.cost / data.liters);
         // Calcular eficiencia si hay odómetro
-        let efficiencyData = { previousOdometer: null, distanceTraveled: null, efficiency: null };
+        let efficiencyData = {
+            previousOdometer: null,
+            distanceTraveled: null,
+            efficiency: null
+        };
         if (data.odometer_reading && data.courier_id) {
             efficiencyData = await this.calculateEfficiency(data.courier_id, data.odometer_reading, data.liters, tenantId);
         }

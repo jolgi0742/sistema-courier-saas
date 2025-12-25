@@ -100,9 +100,15 @@ export class FuelService {
         currentOdometer: number,
         liters: number,
         tenantId: string
-    ): Promise<{ previousOdometer: number | null; distanceTraveled: number | null; efficiency: number | null }> {
+    ) {
+        const result = {
+            previousOdometer: null as number | null,
+            distanceTraveled: null as number | null,
+            efficiency: null as number | null
+        };
+
         if (!courierId || !currentOdometer) {
-            return { previousOdometer: null, distanceTraveled: null, efficiency: null };
+            return result;
         }
 
         // Obtener último registro del courier
@@ -117,14 +123,18 @@ export class FuelService {
 
         const records = rows as any[];
         if (records.length === 0) {
-            return { previousOdometer: null, distanceTraveled: null, efficiency: null };
+            return result;
         }
 
         const previousOdometer = records[0].odometer_reading;
         const distanceTraveled = currentOdometer - previousOdometer;
         const efficiency = distanceTraveled > 0 ? distanceTraveled / liters : null;
 
-        return { previousOdometer, distanceTraveled, efficiency };
+        result.previousOdometer = previousOdometer;
+        result.distanceTraveled = distanceTraveled;
+        result.efficiency = efficiency;
+
+        return result;
     }
 
     /**
@@ -137,7 +147,11 @@ export class FuelService {
         const pricePerLiter = data.price_per_liter || (data.cost / data.liters);
 
         // Calcular eficiencia si hay odómetro
-        let efficiencyData = { previousOdometer: null, distanceTraveled: null, efficiency: null };
+        let efficiencyData: { previousOdometer: number | null; distanceTraveled: number | null; efficiency: number | null } = {
+            previousOdometer: null,
+            distanceTraveled: null,
+            efficiency: null
+        };
         if (data.odometer_reading && data.courier_id) {
             efficiencyData = await this.calculateEfficiency(
                 data.courier_id,
