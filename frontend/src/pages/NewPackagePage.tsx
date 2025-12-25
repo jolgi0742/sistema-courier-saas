@@ -16,6 +16,8 @@ const NewPackagePage: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState<Client[]>([]);
+    const [zones, setZones] = useState<string[]>([]);
+    const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
     const [formData, setFormData] = useState({
         client_id: '',
         sender_name: '',
@@ -23,6 +25,8 @@ const NewPackagePage: React.FC = () => {
         recipient_name: '',
         recipient_phone: '',
         recipient_address: '',
+        zone: '',
+        service_type: 'standard',
         weight: '',
         dimensions: '',
         declared_value: '',
@@ -32,8 +36,18 @@ const NewPackagePage: React.FC = () => {
     useEffect(() => {
         if (tenant) {
             fetchClients();
+            fetchZones();
         }
     }, [tenant]);
+
+    useEffect(() => {
+        // Calcular precio cuando cambien zona, peso o tipo de servicio
+        if (formData.zone && formData.weight && parseFloat(formData.weight) > 0) {
+            calculatePrice();
+        } else {
+            setCalculatedPrice(null);
+        }
+    }, [formData.zone, formData.weight, formData.service_type]);
 
     const fetchClients = async () => {
         if (!tenant) return;
@@ -41,14 +55,44 @@ const NewPackagePage: React.FC = () => {
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
             const response = await fetch(`${apiUrl}/api/clients`, {
-                headers: {
-                    'X-Tenant-ID': tenant.id
-                }
+                headers: { 'X-Tenant-ID': tenant.id }
             });
             const data = await response.json();
             setClients(data.clients || []);
         } catch (error) {
             console.error('Error fetching clients:', error);
+        }
+    };
+
+    const fetchZones = async () => {
+        if (!tenant) return;
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const response = await fetch(`${apiUrl}/api/rates/zones`, {
+                headers: { 'X-Tenant-ID': tenant.id }
+            });
+            const data = await response.json();
+            setZones(data.zones || []);
+        } catch (error) {
+            console.error('Error fetching zones:', error);
+        }
+    };
+
+    const calculatePrice = async () => {
+        if (!tenant || !formData.zone || !formData.weight) return;
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const response = await fetch(
+                `${apiUrl}/api/rates/calculate?zone=${formData.zone}&weight=${formData.weight}&serviceType=${formData.service_type}`,
+                { headers: { 'X-Tenant-ID': tenant.id } }
+            );
+            const data = await response.json();
+            setCalculatedPrice(data.totalPrice || null);
+        } catch (error) {
+            console.error('Error calculating price:', error);
+            setCalculatedPrice(null);
         }
     };
 
@@ -215,13 +259,42 @@ const NewPackagePage: React.FC = () => {
                     <h2>Detalles del Paquete</h2>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Peso (kg)</label>
+                            <label>Zona de Entrega *</label>
+                            <select
+                                value={formData.zone}
+                                onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
+                                required
+                            >
+                                <option value="">Seleccionar zona</option>
+                                {zones.map(zone => (
+                                    <option key={zone} value={zone}>{zone}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Tipo de Servicio *</label>
+                            <select
+                                value={formData.service_type}
+                                onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
+                                required
+                            >
+                                <option value="standard">Estándar</option>
+                                <option value="express">Express</option>
+                                <option value="same_day">Mismo Día</option>
+                                <option value="scheduled">Programado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Peso (kg) *</label>
                             <input
                                 type="number"
                                 step="0.01"
                                 value={formData.weight}
                                 onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                                 placeholder="0.00"
+                                required
                             />
                         </div>
                         <div className="form-group">
@@ -244,6 +317,15 @@ const NewPackagePage: React.FC = () => {
                             />
                         </div>
                     </div>
+
+                    {/* Precio Calculado */}
+                    {calculatedPrice !== null && (
+                        <div className="price-calculator">
+                            <div className="price-label">Precio Estimado:</div>
+                            <div className="price-value">₡{calculatedPrice.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                    )}
+
                     <div className="form-row">
                         <div className="form-group full-width">
                             <label>Notas</label>
@@ -388,6 +470,29 @@ const NewPackagePage: React.FC = () => {
                 .form-group textarea {
                     resize: vertical;
                     font-family: inherit;
+                }
+
+                .price-calculator {
+                    background: linear-gradient(135deg, ${tenant?.branding?.primary_color || '#3b82f6'} 0%, ${tenant?.branding?.secondary_color || '#8b5cf6'} 100%);
+                    padding: 20px;
+                    border-radius: 12px;
+                    margin: 20px 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                }
+
+                .price-label {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: white;
+                }
+
+                .price-value {
+                    font-size: 32px;
+                    font-weight: 700;
+                    color: white;
                 }
 
                 .form-actions {
