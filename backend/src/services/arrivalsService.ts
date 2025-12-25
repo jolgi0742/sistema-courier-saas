@@ -104,7 +104,7 @@ export class ArrivalsService {
 
         // Si se proporciona tracking number, buscar el paquete
         if (!packageId && data.trackingNumber) {
-            const pkg = await PackageService.getByTracking(data.trackingNumber, tenantId);
+            const pkg = await PackagesService.getByTracking(data.trackingNumber, tenantId);
             if (!pkg) {
                 throw new Error('Paquete no encontrado');
             }
@@ -132,7 +132,7 @@ export class ArrivalsService {
         );
 
         // Actualizar estado del paquete a "in_warehouse"
-        await PackageService.updateStatus(packageId, 'in_warehouse', tenantId);
+        await PackagesService.updateStatus(packageId, 'in_warehouse', tenantId);
 
         return this.getById(id, tenantId) as Promise<PackageArrival>;
     }
