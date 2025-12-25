@@ -27,6 +27,7 @@ import DocumentsPage from './pages/DocumentsPage';
 import WarehousePage from './pages/WarehousePage';
 import ArrivalsPage from './pages/ArrivalsPage';
 import ManifestsPage from './pages/ManifestsPage';
+import ShippersPage from './pages/ShippersPage';
 import TenantLoadingPage from './pages/TenantLoadingPage';
 import TenantErrorPage from './pages/TenantErrorPage';
 
@@ -170,6 +171,12 @@ const App: React.FC = () => {
                     <Route path="/manifests" element={
                         <ProtectedRoute>
                             <ManifestsPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/shippers" element={
+                        <ProtectedRoute>
+                            <ShippersPage />
                         </ProtectedRoute>
                     } />
 
