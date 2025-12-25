@@ -22,6 +22,8 @@ import deliverySignatureRoutes from './routes/deliverySignatureRoutes';
 import ratesRoutes from './routes/ratesRoutes';
 import incidentsRoutes from './routes/incidentsRoutes';
 import fuelRoutes from './routes/fuelRoutes';
+import vehiclesRoutes from './routes/vehiclesRoutes';
+import maintenanceRoutes from './routes/maintenanceRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -85,6 +87,8 @@ app.use('/api/delivery-signature', deliverySignatureRoutes);
 app.use('/api/rates', ratesRoutes);
 app.use('/api/incidents', incidentsRoutes);
 app.use('/api/fuel', fuelRoutes);
+app.use('/api/vehicles', vehiclesRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/sinpe', sinpeRoutes);
 app.use('/api/paypal', paypalRoutes);
 
