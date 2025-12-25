@@ -21,6 +21,8 @@ import CouriersPage from './pages/CouriersPage';
 import RatesPage from './pages/RatesPage';
 import IncidentsPage from './pages/IncidentsPage';
 import FuelPage from './pages/FuelPage';
+import VehiclesPage from './pages/VehiclesPage';
+import MaintenancePage from './pages/MaintenancePage';
 import TenantLoadingPage from './pages/TenantLoadingPage';
 import TenantErrorPage from './pages/TenantErrorPage';
 
@@ -128,6 +130,18 @@ const App: React.FC = () => {
                     <Route path="/fuel" element={
                         <ProtectedRoute>
                             <FuelPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/vehicles" element={
+                        <ProtectedRoute>
+                            <VehiclesPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/maintenance" element={
+                        <ProtectedRoute>
+                            <MaintenancePage />
                         </ProtectedRoute>
                     } />
 
