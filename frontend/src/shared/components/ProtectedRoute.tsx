@@ -2,6 +2,7 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import Layout from '../../components/Layout';
 
 interface ProtectedRouteProps {
     children: ReactNode;
@@ -45,8 +46,8 @@ const ProtectedRoute = ({ children, redirectTo = '/login' }: ProtectedRouteProps
         return <Navigate to={redirectTo} state={{ from: location }} replace />;
     }
 
-    // Si está autenticado, mostrar el contenido
-    return <>{children}</>;
+    // Si está autenticado, mostrar el contenido con Layout (incluye Sidebar)
+    return <Layout>{children}</Layout>;
 };
 
 export default ProtectedRoute;
