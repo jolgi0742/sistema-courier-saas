@@ -33,6 +33,7 @@ const arrivalsRoutes_1 = __importDefault(require("./routes/arrivalsRoutes"));
 const manifestsRoutes_1 = __importDefault(require("./routes/manifestsRoutes"));
 const shippersRoutes_1 = __importDefault(require("./routes/shippersRoutes"));
 const expensesRoutes_1 = __importDefault(require("./routes/expensesRoutes"));
+const suppliersRoutes_1 = __importDefault(require("./routes/suppliersRoutes"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
 // Middleware de logging
@@ -95,6 +96,7 @@ app.use('/api/arrivals', arrivalsRoutes_1.default);
 app.use('/api/manifests', manifestsRoutes_1.default);
 app.use('/api/shippers', shippersRoutes_1.default);
 app.use('/api/expenses', expensesRoutes_1.default);
+app.use('/api/suppliers', suppliersRoutes_1.default);
 app.use('/api/sinpe', sinpeRoutes_1.default);
 app.use('/api/paypal', paypalRoutes_1.default);
 // Ruta 404
