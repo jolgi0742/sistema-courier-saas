@@ -1,0 +1,1 @@
+{"version":3,"file":"labelService.d.ts","sourceRoot":"","sources":["../../src/services/labelService.ts"],"names":[],"mappings":"AAKA,qBAAa,YAAY;IACrB;;OAEG;WACU,oBAAoB,CAAC,SAAS,EAAE,MAAM,EAAE,QAAQ,EAAE,MAAM,GAAG,OAAO,CAAC,MAAM,CAAC;IAkGvF;;OAEG;WACU,oBAAoB,CAAC,SAAS,EAAE,MAAM,EAAE,QAAQ,EAAE,MAAM,GAAG,OAAO,CAAC,MAAM,CAAC;CA4G1F;AAED,eAAe,YAAY,CAAC"}
