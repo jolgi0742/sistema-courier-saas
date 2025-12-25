@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '../contexts/TenantContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Truck, Clock, CheckCircle, MapPin } from 'lucide-react';
+import { ArrowLeft, Edit, Printer, FileText } from 'lucide-react';
 
 interface PackageDetail {
     id: string;
@@ -73,6 +73,58 @@ const PackageDetailPage: React.FC = () => {
         }
     };
 
+    const downloadLabel = async () => {
+        if (!tenant || !id) return;
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const response = await fetch(`${apiUrl}/api/labels/package/${id}`, {
+                headers: { 'X-Tenant-ID': tenant.id }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `etiqueta-${pkg?.tracking_number}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }
+        } catch (error) {
+            console.error('Error downloading label:', error);
+            alert('Error al descargar la etiqueta');
+        }
+    };
+
+    const downloadDeliveryNote = async () => {
+        if (!tenant || !id) return;
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const response = await fetch(`${apiUrl}/api/labels/delivery-note/${id}`, {
+                headers: { 'X-Tenant-ID': tenant.id }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `nota-entrega-${pkg?.tracking_number}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }
+        } catch (error) {
+            console.error('Error downloading delivery note:', error);
+            alert('Error al descargar la nota de entrega');
+        }
+    };
+
     const getStatusBadge = (status: string) => {
         const statusConfig: Record<string, { label: string; color: string }> = {
             'pending': { label: 'Pendiente', color: '#6b7280' },
@@ -120,13 +172,23 @@ const PackageDetailPage: React.FC = () => {
                     <h1>{pkg.tracking_number}</h1>
                     {getStatusBadge(pkg.status)}
                 </div>
-                <button
-                    className="btn-edit"
-                    onClick={() => navigate(`/packages/${id}/edit`)}
-                >
-                    <Edit size={20} />
-                    Editar
-                </button>
+                <div className="header-actions">
+                    <button className="btn-action" onClick={downloadLabel} title="Imprimir Etiqueta">
+                        <Printer size={20} />
+                        Etiqueta
+                    </button>
+                    <button className="btn-action" onClick={downloadDeliveryNote} title="Nota de Entrega">
+                        <FileText size={20} />
+                        Nota
+                    </button>
+                    <button
+                        className="btn-edit"
+                        onClick={() => navigate(`/packages/${id}/edit`)}
+                    >
+                        <Edit size={20} />
+                        Editar
+                    </button>
+                </div>
             </div>
 
             <div className="detail-grid">
@@ -232,7 +294,7 @@ const PackageDetailPage: React.FC = () => {
                     margin: 0;
                 }
 
-                .btn-back, .btn-edit {
+                .btn-back, .btn-edit, .btn-action {
                     display: flex;
                     align-items: center;
                     gap: 8px;
@@ -244,11 +306,17 @@ const PackageDetailPage: React.FC = () => {
                     color: #6b7280;
                     font-weight: 500;
                     transition: all 0.2s;
+                    font-size: 14px;
                 }
 
-                .btn-back:hover, .btn-edit:hover {
+                .btn-back:hover, .btn-edit:hover, .btn-action:hover {
                     background: #f3f4f6;
                     color: #1f2937;
+                }
+
+                .header-actions {
+                    display: flex;
+                    gap: 12px;
                 }
 
                 .btn-edit {
@@ -259,6 +327,7 @@ const PackageDetailPage: React.FC = () => {
 
                 .btn-edit:hover {
                     opacity: 0.9;
+                    background: ${tenant?.branding?.primary_color || '#3b82f6'};
                 }
 
                 .detail-grid {
