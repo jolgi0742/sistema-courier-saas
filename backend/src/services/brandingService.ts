@@ -25,7 +25,7 @@ export class BrandingService {
      * Obtener branding por tenant ID
      */
     static async getByTenantId(tenantId: string): Promise<TenantBranding | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM tenant_branding WHERE tenant_id = ?',
             [tenantId]
         );
@@ -36,7 +36,7 @@ export class BrandingService {
      * Crear branding inicial para un tenant
      */
     static async create(tenantId: string, companyName: string): Promise<TenantBranding> {
-        await pool.execute(
+        await pool.query(
             `INSERT INTO tenant_branding (tenant_id, company_name, primary_color, secondary_color, accent_color)
        VALUES (?, ?, '#3B82F6', '#1E40AF', '#10B981')`,
             [tenantId, companyName]
@@ -68,7 +68,7 @@ export class BrandingService {
 
         if (updates.length > 0) {
             values.push(tenantId);
-            await pool.execute(
+            await pool.query(
                 `UPDATE tenant_branding SET ${updates.join(', ')} WHERE tenant_id = ?`,
                 values
             );
@@ -94,7 +94,7 @@ export class BrandingService {
         const fieldName = type === 'logo' ? 'logo_url' :
             type === 'logo_white' ? 'logo_white_url' : 'favicon_url';
 
-        await pool.execute(
+        await pool.query(
             `UPDATE tenant_branding SET ${fieldName} = ? WHERE tenant_id = ?`,
             [dataUrl, tenantId]
         );

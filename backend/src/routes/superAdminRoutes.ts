@@ -17,21 +17,21 @@ router.use(superAdminMiddleware);
 router.get('/dashboard', async (req: Request, res: Response) => {
     try {
         // Total de tenants por estado
-        const [statusCounts] = await pool.execute(`
+        const { rows: statusCounts } = await pool.query(`
       SELECT status, COUNT(*) as count 
       FROM tenants 
       GROUP BY status
     `) as any;
 
         // Total de tenants por plan
-        const [planCounts] = await pool.execute(`
+        const { rows: planCounts } = await pool.query(`
       SELECT plan_id, COUNT(*) as count 
       FROM tenants 
       GROUP BY plan_id
     `) as any;
 
         // MRR (Monthly Recurring Revenue)
-        const [mrrResult] = await pool.execute(`
+        const { rows: mrrResult } = await pool.query(`
       SELECT SUM(p.price_monthly) as mrr
       FROM subscriptions s
       JOIN plans p ON s.plan_id = p.id
@@ -39,7 +39,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
     `) as any;
 
         // Nuevos tenants este mes
-        const [newThisMonth] = await pool.execute(`
+        const { rows: newThisMonth } = await pool.query(`
       SELECT COUNT(*) as count
       FROM tenants
       WHERE MONTH(created_at) = MONTH(CURRENT_DATE())
@@ -47,14 +47,14 @@ router.get('/dashboard', async (req: Request, res: Response) => {
     `) as any;
 
         // Churn rate (cancelados / activos)
-        const [churnData] = await pool.execute(`
+        const { rows: churnData } = await pool.query(`
       SELECT 
         (SELECT COUNT(*) FROM tenants WHERE status = 'cancelled') as cancelled,
         (SELECT COUNT(*) FROM tenants WHERE status = 'active') as active
     `) as any;
 
         // Tenants recientes
-        const [recentTenants] = await pool.execute(`
+        const { rows: recentTenants } = await pool.query(`
       SELECT t.*, tb.company_name, tb.logo_url
       FROM tenants t
       LEFT JOIN tenant_branding tb ON t.id = tb.tenant_id
@@ -151,13 +151,13 @@ router.get('/tenants/:id', async (req: Request, res: Response) => {
         const branding = await BrandingService.getByTenantId(id);
 
         // Obtener suscripción
-        const [subRows] = await pool.execute(
+        const { rows: subRows } = await pool.query(
             'SELECT * FROM subscriptions WHERE tenant_id = ?',
             [id]
         ) as any;
 
         // Obtener dominios
-        const [domainRows] = await pool.execute(
+        const { rows: domainRows } = await pool.query(
             'SELECT * FROM tenant_domains WHERE tenant_id = ?',
             [id]
         ) as any;
@@ -245,7 +245,7 @@ router.post('/tenants/:id/activate', async (req: Request, res: Response) => {
  */
 router.get('/subscriptions', async (req: Request, res: Response) => {
     try {
-        const [rows] = await pool.execute(`
+        const { rows } = await pool.query(`
       SELECT s.*, t.name as tenant_name, t.subdomain, p.name as plan_name, p.price_monthly
       FROM subscriptions s
       JOIN tenants t ON s.tenant_id = t.id
@@ -266,7 +266,7 @@ router.get('/subscriptions', async (req: Request, res: Response) => {
  */
 router.get('/plans', async (req: Request, res: Response) => {
     try {
-        const [rows] = await pool.execute('SELECT * FROM plans ORDER BY price_monthly ASC');
+        const { rows } = await pool.query('SELECT * FROM plans ORDER BY price_monthly ASC');
 
         const plans = (rows as any[]).map(plan => ({
             ...plan,

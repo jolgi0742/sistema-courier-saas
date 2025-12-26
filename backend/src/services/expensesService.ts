@@ -39,7 +39,7 @@ export class ExpensesService {
 
         query += ' ORDER BY next_due_date ASC, name ASC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as RecurringExpense[];
     }
 
@@ -47,7 +47,7 @@ export class ExpensesService {
      * Obtener gasto por ID
      */
     static async getById(id: string, tenantId: string): Promise<RecurringExpense | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM recurring_expenses WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -59,7 +59,7 @@ export class ExpensesService {
      * Obtener gastos próximos a vencer
      */
     static async getUpcoming(tenantId: string, days: number = 30): Promise<RecurringExpense[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT * FROM recurring_expenses 
              WHERE tenant_id = ? 
              AND status = 'active'
@@ -77,7 +77,7 @@ export class ExpensesService {
     static async create(data: Omit<RecurringExpense, 'id' | 'created_at' | 'updated_at'>, tenantId: string): Promise<RecurringExpense> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO recurring_expenses (
                 id, tenant_id, name, category, amount, frequency, next_due_date, status, notes
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -139,7 +139,7 @@ export class ExpensesService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE recurring_expenses SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -151,7 +151,7 @@ export class ExpensesService {
      * Eliminar gasto recurrente
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM recurring_expenses WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -168,7 +168,7 @@ export class ExpensesService {
         totalMonthly: number;
         totalYearly: number;
     }> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
@@ -180,7 +180,7 @@ export class ExpensesService {
         const stats = (rows as any[])[0];
 
         // Calcular total mensual y anual
-        const [amountRows] = await pool.execute(
+        const { rows: amountRows } = await pool.query(
             `SELECT 
                 SUM(CASE 
                     WHEN frequency = 'daily' THEN amount * 30
@@ -214,7 +214,7 @@ export class ExpensesService {
      * Obtener categorías únicas
      */
     static async getCategories(tenantId: string): Promise<string[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT DISTINCT category FROM recurring_expenses WHERE tenant_id = ? AND category IS NOT NULL ORDER BY category',
             [tenantId]
         );

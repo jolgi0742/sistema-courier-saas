@@ -52,7 +52,7 @@ export class WarehouseService {
 
         query += ' ORDER BY code ASC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as WarehouseLocation[];
     }
 
@@ -60,7 +60,7 @@ export class WarehouseService {
      * Obtener ubicación por ID
      */
     static async getLocationById(id: string, tenantId: string): Promise<WarehouseLocation | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM warehouse_locations WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -72,7 +72,7 @@ export class WarehouseService {
      * Buscar ubicación por código
      */
     static async getLocationByCode(code: string, tenantId: string): Promise<WarehouseLocation | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM warehouse_locations WHERE code = ? AND tenant_id = ?',
             [code, tenantId]
         );
@@ -86,7 +86,7 @@ export class WarehouseService {
     static async createLocation(data: Omit<WarehouseLocation, 'id' | 'created_at' | 'current_packages'>, tenantId: string): Promise<WarehouseLocation> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO warehouse_locations (
                 id, tenant_id, code, name, zone, capacity, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -138,7 +138,7 @@ export class WarehouseService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE warehouse_locations SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -150,7 +150,7 @@ export class WarehouseService {
      * Eliminar ubicación
      */
     static async deleteLocation(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM warehouse_locations WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -164,21 +164,21 @@ export class WarehouseService {
         const id = uuidv4();
 
         // Verificar si el paquete ya tiene una ubicación activa
-        const [existing] = await pool.execute(
+        const { rows: existing } = await pool.query(
             'SELECT id FROM package_locations WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
             [packageId, tenantId]
         );
 
         if ((existing as any[]).length > 0) {
             // Remover ubicación anterior
-            await pool.execute(
+            await pool.query(
                 'UPDATE package_locations SET removed_at = NOW() WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
                 [packageId, tenantId]
             );
         }
 
         // Crear nueva asignación
-        await pool.execute(
+        await pool.query(
             `INSERT INTO package_locations (
                 id, tenant_id, package_id, location_id
             ) VALUES (?, ?, ?, ?)`,
@@ -188,7 +188,7 @@ export class WarehouseService {
         // Actualizar contador de paquetes en la ubicación
         await this.updateLocationPackageCount(locationId, tenantId);
 
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM package_locations WHERE id = ?',
             [id]
         );
@@ -199,14 +199,14 @@ export class WarehouseService {
      * Remover paquete de ubicación
      */
     static async removePackage(packageId: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'UPDATE package_locations SET removed_at = NOW() WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
             [packageId, tenantId]
         );
 
         if ((result as any).affectedRows > 0) {
             // Actualizar contador de paquetes
-            const [locationRows] = await pool.execute(
+            const { rows: locationRows } = await pool.query(
                 'SELECT location_id FROM package_locations WHERE package_id = ? AND tenant_id = ? ORDER BY assigned_at DESC LIMIT 1',
                 [packageId, tenantId]
             );
@@ -222,7 +222,7 @@ export class WarehouseService {
      * Obtener paquetes en una ubicación
      */
     static async getPackagesInLocation(locationId: string, tenantId: string): Promise<PackageLocationWithDetails[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 pl.*,
                 wl.code as location_code,
@@ -242,7 +242,7 @@ export class WarehouseService {
      * Buscar paquete por tracking number
      */
     static async findPackageLocation(trackingNumber: string, tenantId: string): Promise<PackageLocationWithDetails | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 pl.*,
                 wl.code as location_code,
@@ -263,7 +263,7 @@ export class WarehouseService {
      * Actualizar contador de paquetes en ubicación
      */
     private static async updateLocationPackageCount(locationId: string, tenantId: string): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE warehouse_locations 
              SET current_packages = (
                  SELECT COUNT(*) 
@@ -275,7 +275,7 @@ export class WarehouseService {
         );
 
         // Actualizar estado si está lleno
-        await pool.execute(
+        await pool.query(
             `UPDATE warehouse_locations 
              SET status = CASE 
                  WHEN current_packages >= capacity THEN 'full'
@@ -298,7 +298,7 @@ export class WarehouseService {
         totalCapacity: number;
         utilizationRate: number;
     }> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 COUNT(*) as totalLocations,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as activeLocations,
@@ -328,7 +328,7 @@ export class WarehouseService {
      * Obtener zonas únicas
      */
     static async getZones(tenantId: string): Promise<string[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT DISTINCT zone FROM warehouse_locations WHERE tenant_id = ? AND zone IS NOT NULL ORDER BY zone',
             [tenantId]
         );

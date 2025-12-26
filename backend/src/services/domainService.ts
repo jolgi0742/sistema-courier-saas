@@ -27,7 +27,7 @@ export class DomainService {
      * Obtener todos los dominios de un tenant
      */
     static async getByTenantId(tenantId: string): Promise<TenantDomain[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM tenant_domains WHERE tenant_id = ? ORDER BY is_primary DESC',
             [tenantId]
         );
@@ -38,7 +38,7 @@ export class DomainService {
      * Obtener dominio principal
      */
     static async getPrimaryDomain(tenantId: string): Promise<TenantDomain | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM tenant_domains WHERE tenant_id = ? AND is_primary = TRUE LIMIT 1',
             [tenantId]
         );
@@ -49,7 +49,7 @@ export class DomainService {
      * Buscar tenant por dominio personalizado
      */
     static async getTenantByDomain(domain: string): Promise<string | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT tenant_id FROM tenant_domains WHERE domain = ? AND ssl_status = "active"',
             [domain.toLowerCase()]
         );
@@ -66,7 +66,7 @@ export class DomainService {
         }
 
         // Verificar que no exista
-        const [existing] = await pool.execute(
+        const { rows: existing } = await pool.query(
             'SELECT id FROM tenant_domains WHERE domain = ?',
             [domain.toLowerCase()]
         ) as any;
@@ -76,7 +76,7 @@ export class DomainService {
         }
 
         // Verificar que el tenant tiene plan Enterprise
-        const [tenantRows] = await pool.execute(
+        const { rows: tenantRows } = await pool.query(
             'SELECT plan_id FROM tenants WHERE id = ?',
             [tenantId]
         ) as any;
@@ -87,7 +87,7 @@ export class DomainService {
 
         // Crear registro de dominio
         const id = uuidv4();
-        await pool.execute(
+        await pool.query(
             `INSERT INTO tenant_domains (id, tenant_id, domain_type, domain, is_primary, ssl_status)
        VALUES (?, ?, 'custom', ?, FALSE, 'pending')`,
             [id, tenantId, domain.toLowerCase()]
@@ -100,7 +100,7 @@ export class DomainService {
      * Obtener dominio por ID
      */
     static async getById(id: string): Promise<TenantDomain | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM tenant_domains WHERE id = ?',
             [id]
         );
@@ -122,7 +122,7 @@ export class DomainService {
             // Verificar que apunta a nuestro CNAME target
             if (records.includes(this.CNAME_TARGET)) {
                 // Marcar como verificado
-                await pool.execute(
+                await pool.query(
                     `UPDATE tenant_domains SET verified_at = NOW(), ssl_status = 'provisioning' WHERE id = ?`,
                     [domainId]
                 );
@@ -153,13 +153,13 @@ export class DomainService {
      */
     static async setPrimary(tenantId: string, domainId: string): Promise<void> {
         // Quitar primary de otros dominios
-        await pool.execute(
+        await pool.query(
             'UPDATE tenant_domains SET is_primary = FALSE WHERE tenant_id = ?',
             [tenantId]
         );
 
         // Establecer el nuevo primary
-        await pool.execute(
+        await pool.query(
             'UPDATE tenant_domains SET is_primary = TRUE WHERE id = ? AND tenant_id = ?',
             [domainId, tenantId]
         );
@@ -183,7 +183,7 @@ export class DomainService {
             throw new Error('No se puede eliminar el subdominio principal');
         }
 
-        await pool.execute('DELETE FROM tenant_domains WHERE id = ?', [domainId]);
+        await pool.query('DELETE FROM tenant_domains WHERE id = ?', [domainId]);
     }
 
     /**
@@ -194,7 +194,7 @@ export class DomainService {
         status: 'pending' | 'provisioning' | 'active' | 'failed',
         expiresAt?: Date
     ): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE tenant_domains SET ssl_status = ?, ssl_expires_at = ? WHERE id = ?`,
             [status, expiresAt || null, domainId]
         );

@@ -62,7 +62,7 @@ export class MaintenanceService {
 
         query += ' ORDER BY m.created_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as MaintenanceWithVehicle[];
     }
 
@@ -70,7 +70,7 @@ export class MaintenanceService {
      * Obtener mantenimiento por ID
      */
     static async getById(id: string, tenantId: string): Promise<MaintenanceWithVehicle | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 m.*,
                 v.plate as vehicle_plate,
@@ -89,7 +89,7 @@ export class MaintenanceService {
      * Obtener mantenimientos por vehículo
      */
     static async getByVehicle(vehicleId: string, tenantId: string): Promise<Maintenance[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM vehicle_maintenance WHERE vehicle_id = ? AND tenant_id = ? ORDER BY created_at DESC',
             [vehicleId, tenantId]
         );
@@ -100,7 +100,7 @@ export class MaintenanceService {
      * Obtener mantenimientos próximos a vencer
      */
     static async getUpcoming(tenantId: string, days: number = 30): Promise<MaintenanceWithVehicle[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 m.*,
                 v.plate as vehicle_plate,
@@ -124,7 +124,7 @@ export class MaintenanceService {
     static async create(data: Omit<Maintenance, 'id' | 'created_at' | 'completed_at'>, tenantId: string): Promise<Maintenance> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO vehicle_maintenance (
                 id, tenant_id, vehicle_id, type, description, cost, provider,
                 odometer_reading, next_service_date, next_service_odometer, status
@@ -193,7 +193,7 @@ export class MaintenanceService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE vehicle_maintenance SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -205,7 +205,7 @@ export class MaintenanceService {
      * Completar mantenimiento
      */
     static async complete(id: string, tenantId: string): Promise<Maintenance | null> {
-        await pool.execute(
+        await pool.query(
             `UPDATE vehicle_maintenance 
              SET status = 'completed', completed_at = NOW()
              WHERE id = ? AND tenant_id = ?`,
@@ -219,7 +219,7 @@ export class MaintenanceService {
      * Eliminar mantenimiento
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM vehicle_maintenance WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -236,7 +236,7 @@ export class MaintenanceService {
         completed: number;
         upcoming: number;
     }> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled,

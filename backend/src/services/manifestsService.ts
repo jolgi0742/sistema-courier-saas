@@ -35,7 +35,7 @@ export class ManifestsService {
      * Generar número de manifiesto único
      */
     private static async generateManifestNumber(tenantId: string): Promise<string> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT COUNT(*) as count FROM cargo_manifests WHERE tenant_id = ?',
             [tenantId]
         );
@@ -78,7 +78,7 @@ export class ManifestsService {
 
         query += ' ORDER BY cm.created_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         const manifests = rows as ManifestWithDetails[];
 
         // Obtener paquetes para cada manifiesto
@@ -93,7 +93,7 @@ export class ManifestsService {
      * Obtener manifiesto por ID
      */
     static async getById(id: string, tenantId: string): Promise<ManifestWithDetails | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 cm.*,
                 c.name as courier_name
@@ -116,7 +116,7 @@ export class ManifestsService {
      * Obtener paquetes de un manifiesto
      */
     static async getManifestPackages(manifestId: string): Promise<ManifestPackage[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 mp.*,
                 p.tracking_number,
@@ -143,7 +143,7 @@ export class ManifestsService {
         const id = uuidv4();
         const manifestNumber = await this.generateManifestNumber(tenantId);
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO cargo_manifests (
                 id, tenant_id, manifest_number, courier_id, route, date, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -200,7 +200,7 @@ export class ManifestsService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE cargo_manifests SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -219,7 +219,7 @@ export class ManifestsService {
         }
 
         // Obtener el último número de secuencia
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT MAX(sequence_number) as max_seq FROM manifest_packages WHERE manifest_id = ?',
             [manifestId]
         );
@@ -228,7 +228,7 @@ export class ManifestsService {
         // Agregar cada paquete
         for (const packageId of packageIds) {
             const id = uuidv4();
-            await pool.execute(
+            await pool.query(
                 `INSERT INTO manifest_packages (id, manifest_id, package_id, sequence_number)
                  VALUES (?, ?, ?, ?)`,
                 [id, manifestId, packageId, sequenceNumber++]
@@ -249,7 +249,7 @@ export class ManifestsService {
             return false;
         }
 
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM manifest_packages WHERE manifest_id = ? AND package_id = ?',
             [manifestId, packageId]
         );
@@ -266,7 +266,7 @@ export class ManifestsService {
      * Actualizar contador de paquetes
      */
     private static async updatePackageCount(manifestId: string): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE cargo_manifests 
              SET total_packages = (
                  SELECT COUNT(*) FROM manifest_packages WHERE manifest_id = ?
@@ -280,7 +280,7 @@ export class ManifestsService {
      * Eliminar manifiesto
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM cargo_manifests WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -296,7 +296,7 @@ export class ManifestsService {
         active: number;
         completed: number;
     }> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft,

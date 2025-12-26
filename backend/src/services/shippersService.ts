@@ -33,7 +33,7 @@ export class ShippersService {
 
         query += ' ORDER BY total_shipments DESC, name ASC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as FrequentShipper[];
     }
 
@@ -41,7 +41,7 @@ export class ShippersService {
      * Obtener remitente por ID
      */
     static async getById(id: string, tenantId: string): Promise<FrequentShipper | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM frequent_shippers WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -54,7 +54,7 @@ export class ShippersService {
      */
     static async search(query: string, tenantId: string): Promise<FrequentShipper[]> {
         const searchTerm = `%${query}%`;
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT * FROM frequent_shippers 
              WHERE tenant_id = ? 
              AND (name LIKE ? OR phone LIKE ? OR email LIKE ?)
@@ -71,7 +71,7 @@ export class ShippersService {
     static async create(data: Omit<FrequentShipper, 'id' | 'created_at' | 'updated_at' | 'total_shipments'>, tenantId: string): Promise<FrequentShipper> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO frequent_shippers (
                 id, tenant_id, name, phone, email, address, city, state, postal_code
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -133,7 +133,7 @@ export class ShippersService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE frequent_shippers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -145,7 +145,7 @@ export class ShippersService {
      * Eliminar remitente frecuente
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM frequent_shippers WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -156,7 +156,7 @@ export class ShippersService {
      * Incrementar contador de envíos
      */
     static async incrementShipments(id: string, tenantId: string): Promise<void> {
-        await pool.execute(
+        await pool.query(
             'UPDATE frequent_shippers SET total_shipments = total_shipments + 1 WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -170,13 +170,13 @@ export class ShippersService {
         totalShipments: number;
         topShippers: FrequentShipper[];
     }> {
-        const [countRows] = await pool.execute(
+        const { rows: countRows } = await pool.query(
             'SELECT COUNT(*) as total, SUM(total_shipments) as totalShipments FROM frequent_shippers WHERE tenant_id = ?',
             [tenantId]
         );
         const stats = (countRows as any[])[0];
 
-        const [topRows] = await pool.execute(
+        const { rows: topRows } = await pool.query(
             'SELECT * FROM frequent_shippers WHERE tenant_id = ? ORDER BY total_shipments DESC LIMIT 5',
             [tenantId]
         );

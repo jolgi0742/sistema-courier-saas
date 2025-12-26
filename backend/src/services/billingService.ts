@@ -54,7 +54,7 @@ export class BillingService {
         });
 
         // Guardar stripe_customer_id
-        await pool.execute(
+        await pool.query(
             `UPDATE subscriptions SET stripe_customer_id = ? WHERE tenant_id = ?`,
             [customer.id, tenantId]
         );
@@ -72,7 +72,7 @@ export class BillingService {
         }
 
         // Obtener o crear customer
-        let [subRows] = await pool.execute(
+        let [subRows] = await pool.query(
             'SELECT stripe_customer_id FROM subscriptions WHERE tenant_id = ?',
             [input.tenant_id]
         ) as any;
@@ -81,7 +81,7 @@ export class BillingService {
 
         if (!customerId) {
             // Obtener email del admin del tenant
-            const [adminRows] = await pool.execute(
+            const { rows: adminRows } = await pool.query(
                 'SELECT email FROM users WHERE tenant_id = ? AND role = "admin" LIMIT 1',
                 [input.tenant_id]
             ) as any;
@@ -125,7 +125,7 @@ export class BillingService {
         });
 
         // Guardar en base de datos
-        await pool.execute(
+        await pool.query(
             `INSERT INTO subscriptions (id, tenant_id, plan_id, stripe_subscription_id, stripe_customer_id, status, current_period_start, current_period_end)
        VALUES (UUID(), ?, ?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?))
        ON DUPLICATE KEY UPDATE 
@@ -155,7 +155,7 @@ export class BillingService {
      * Cancelar suscripción
      */
     static async cancelSubscription(tenantId: string, cancelImmediately: boolean = false): Promise<void> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT stripe_subscription_id FROM subscriptions WHERE tenant_id = ?',
             [tenantId]
         ) as any;
@@ -170,7 +170,7 @@ export class BillingService {
                 });
             }
 
-            await pool.execute(
+            await pool.query(
                 'UPDATE subscriptions SET cancel_at_period_end = ? WHERE tenant_id = ?',
                 [!cancelImmediately, tenantId]
             );
@@ -181,7 +181,7 @@ export class BillingService {
      * Cambiar plan (upgrade/downgrade)
      */
     static async changePlan(tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'annual'): Promise<any> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT stripe_subscription_id FROM subscriptions WHERE tenant_id = ?',
             [tenantId]
         ) as any;
@@ -208,7 +208,7 @@ export class BillingService {
         });
 
         // Actualizar en DB
-        await pool.execute(
+        await pool.query(
             'UPDATE subscriptions SET plan_id = ? WHERE tenant_id = ?',
             [newPlanId, tenantId]
         );
@@ -228,13 +228,13 @@ export class BillingService {
                 const customerId = invoice.customer as string;
 
                 // Buscar tenant por customer
-                const [rows] = await pool.execute(
+                const { rows } = await pool.query(
                     'SELECT tenant_id FROM subscriptions WHERE stripe_customer_id = ?',
                     [customerId]
                 ) as any;
 
                 if (rows[0]) {
-                    await pool.execute(
+                    await pool.query(
                         "UPDATE subscriptions SET status = 'active' WHERE tenant_id = ?",
                         [rows[0].tenant_id]
                     );
@@ -247,13 +247,13 @@ export class BillingService {
                 const invoice = event.data.object as Stripe.Invoice;
                 const customerId = invoice.customer as string;
 
-                const [rows] = await pool.execute(
+                const { rows } = await pool.query(
                     'SELECT tenant_id FROM subscriptions WHERE stripe_customer_id = ?',
                     [customerId]
                 ) as any;
 
                 if (rows[0]) {
-                    await pool.execute(
+                    await pool.query(
                         "UPDATE subscriptions SET status = 'past_due' WHERE tenant_id = ?",
                         [rows[0].tenant_id]
                     );
@@ -267,13 +267,13 @@ export class BillingService {
                 const subscription = event.data.object as Stripe.Subscription;
                 const customerId = subscription.customer as string;
 
-                const [rows] = await pool.execute(
+                const { rows } = await pool.query(
                     'SELECT tenant_id FROM subscriptions WHERE stripe_customer_id = ?',
                     [customerId]
                 ) as any;
 
                 if (rows[0]) {
-                    await pool.execute(
+                    await pool.query(
                         "UPDATE subscriptions SET status = 'canceled' WHERE tenant_id = ?",
                         [rows[0].tenant_id]
                     );
@@ -288,7 +288,7 @@ export class BillingService {
      * Obtener portal de facturación (Customer Portal de Stripe)
      */
     static async createBillingPortalSession(tenantId: string, returnUrl: string): Promise<string> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT stripe_customer_id FROM subscriptions WHERE tenant_id = ?',
             [tenantId]
         ) as any;
@@ -310,7 +310,7 @@ export class BillingService {
      * Obtener historial de facturas
      */
     static async getInvoices(tenantId: string): Promise<any[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT stripe_customer_id FROM subscriptions WHERE tenant_id = ?',
             [tenantId]
         ) as any;

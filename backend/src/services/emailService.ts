@@ -38,7 +38,7 @@ export class EmailService {
         const branding = await BrandingService.getByTenantId(tenantId);
 
         // Obtener info del tenant
-        const [tenantRows] = await pool.execute(
+        const { rows: tenantRows } = await pool.query(
             'SELECT plan_id FROM tenants WHERE id = ?',
             [tenantId]
         ) as any;
@@ -194,7 +194,7 @@ export class EmailService {
         htmlContent: string
     ): Promise<void> {
         const branding = await BrandingService.getByTenantId(tenantId);
-        const [tenantRows] = await pool.execute(
+        const { rows: tenantRows } = await pool.query(
             'SELECT plan_id FROM tenants WHERE id = ?',
             [tenantId]
         ) as any;

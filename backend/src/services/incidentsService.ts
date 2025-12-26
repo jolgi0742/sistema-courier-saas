@@ -61,7 +61,7 @@ export class IncidentsService {
 
         query += ' ORDER BY i.created_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as IncidentWithPackage[];
     }
 
@@ -69,7 +69,7 @@ export class IncidentsService {
      * Obtener incidencia por ID
      */
     static async getById(id: string, tenantId: string): Promise<IncidentWithPackage | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 i.*,
                 p.tracking_number,
@@ -88,7 +88,7 @@ export class IncidentsService {
      * Obtener incidencias por paquete
      */
     static async getByPackage(packageId: string, tenantId: string): Promise<Incident[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM incidents WHERE package_id = ? AND tenant_id = ? ORDER BY created_at DESC',
             [packageId, tenantId]
         );
@@ -101,7 +101,7 @@ export class IncidentsService {
     static async create(data: Omit<Incident, 'id' | 'created_at' | 'updated_at' | 'resolved_at'>, tenantId: string): Promise<Incident> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO incidents (
                 id, tenant_id, package_id, type, status, priority,
                 description, resolution, assigned_to, reported_by
@@ -161,7 +161,7 @@ export class IncidentsService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE incidents SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -173,7 +173,7 @@ export class IncidentsService {
      * Resolver incidencia
      */
     static async resolve(id: string, resolution: string, tenantId: string): Promise<Incident | null> {
-        await pool.execute(
+        await pool.query(
             `UPDATE incidents 
              SET status = 'resolved', 
                  resolution = ?, 
@@ -190,7 +190,7 @@ export class IncidentsService {
      * Eliminar incidencia
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM incidents WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -208,7 +208,7 @@ export class IncidentsService {
         byType: Record<string, number>;
         byPriority: Record<string, number>;
     }> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open,
@@ -221,7 +221,7 @@ export class IncidentsService {
         const stats = (rows as any[])[0];
 
         // Por tipo
-        const [typeRows] = await pool.execute(
+        const { rows: typeRows } = await pool.query(
             'SELECT type, COUNT(*) as count FROM incidents WHERE tenant_id = ? GROUP BY type',
             [tenantId]
         );
@@ -232,7 +232,7 @@ export class IncidentsService {
         });
 
         // Por prioridad
-        const [priorityRows] = await pool.execute(
+        const { rows: priorityRows } = await pool.query(
             'SELECT priority, COUNT(*) as count FROM incidents WHERE tenant_id = ? GROUP BY priority',
             [tenantId]
         );

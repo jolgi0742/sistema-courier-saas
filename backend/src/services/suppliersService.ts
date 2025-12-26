@@ -50,7 +50,7 @@ export class SuppliersService {
 
         query += ' ORDER BY name ASC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as Supplier[];
     }
 
@@ -58,7 +58,7 @@ export class SuppliersService {
      * Obtener proveedor por ID
      */
     static async getById(id: string, tenantId: string): Promise<Supplier | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM suppliers WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -72,7 +72,7 @@ export class SuppliersService {
     static async create(data: Omit<Supplier, 'id' | 'created_at' | 'updated_at'>, tenantId: string): Promise<Supplier> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO suppliers (
                 id, tenant_id, name, contact_name, phone, email, 
                 address, city, state, postal_code, category, notes, status
@@ -155,7 +155,7 @@ export class SuppliersService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE suppliers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -167,7 +167,7 @@ export class SuppliersService {
      * Eliminar proveedor
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM suppliers WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -183,7 +183,7 @@ export class SuppliersService {
         inactive: number;
         byCategory: { category: string; count: number }[];
     }> {
-        const [countRows] = await pool.execute(
+        const { rows: countRows } = await pool.query(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
@@ -194,7 +194,7 @@ export class SuppliersService {
 
         const stats = (countRows as any[])[0];
 
-        const [categoryRows] = await pool.execute(
+        const { rows: categoryRows } = await pool.query(
             `SELECT category, COUNT(*) as count 
              FROM suppliers 
              WHERE tenant_id = ? AND category IS NOT NULL
@@ -215,7 +215,7 @@ export class SuppliersService {
      * Obtener categorías únicas
      */
     static async getCategories(tenantId: string): Promise<string[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT DISTINCT category FROM suppliers WHERE tenant_id = ? AND category IS NOT NULL ORDER BY category',
             [tenantId]
         );

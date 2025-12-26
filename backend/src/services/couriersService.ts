@@ -38,7 +38,7 @@ export class CouriersService {
     static async create(input: CreateCourierInput): Promise<Courier> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO couriers (
         id, tenant_id, name, email, phone, vehicle_type, 
         vehicle_plate, zone, status, commission_rate
@@ -57,7 +57,7 @@ export class CouriersService {
      * Obtener courier por ID
      */
     static async getById(id: string, tenantId: string): Promise<Courier | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM couriers WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -93,7 +93,7 @@ export class CouriersService {
 
         query += ' ORDER BY name ASC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as Courier[];
     }
 
@@ -111,7 +111,7 @@ export class CouriersService {
 
         query += ' ORDER BY completed_deliveries ASC, rating DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as Courier[];
     }
 
@@ -137,7 +137,7 @@ export class CouriersService {
         updates.push('updated_at = NOW()');
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE couriers SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -149,7 +149,7 @@ export class CouriersService {
      * Actualizar estado
      */
     static async updateStatus(id: string, tenantId: string, status: string): Promise<Courier | null> {
-        await pool.execute(
+        await pool.query(
             'UPDATE couriers SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?',
             [status, id, tenantId]
         );
@@ -160,7 +160,7 @@ export class CouriersService {
      * Registrar entrega completada
      */
     static async recordDelivery(id: string, tenantId: string, commission: number): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE couriers SET 
         completed_deliveries = completed_deliveries + 1,
         balance = balance + ?,
@@ -175,7 +175,7 @@ export class CouriersService {
      * Pagar balance al courier
      */
     static async payBalance(id: string, tenantId: string, amount: number): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE couriers SET balance = balance - ?, updated_at = NOW() 
        WHERE id = ? AND tenant_id = ? AND balance >= ?`,
             [amount, id, tenantId, amount]
@@ -186,13 +186,13 @@ export class CouriersService {
      * Estadísticas de couriers
      */
     static async getStats(tenantId: string): Promise<Record<string, any>> {
-        const [statusRows] = await pool.execute(
+        const { rows: statusRows } = await pool.query(
             `SELECT status, COUNT(*) as count FROM couriers 
        WHERE tenant_id = ? GROUP BY status`,
             [tenantId]
         ) as any;
 
-        const [topRows] = await pool.execute(
+        const { rows: topRows } = await pool.query(
             `SELECT id, name, completed_deliveries, rating FROM couriers 
        WHERE tenant_id = ? ORDER BY completed_deliveries DESC LIMIT 5`,
             [tenantId]
@@ -219,7 +219,7 @@ export class CouriersService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         // Solo eliminar si no tiene paquetes asignados
-        const [packages] = await pool.execute(
+        const { rows: packages } = await pool.query(
             `SELECT COUNT(*) as count FROM packages 
        WHERE courier_id = ? AND tenant_id = ? AND status NOT IN ('delivered', 'cancelled')`,
             [id, tenantId]
@@ -229,7 +229,7 @@ export class CouriersService {
             throw new Error('No se puede eliminar courier con paquetes asignados');
         }
 
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM couriers WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         ) as any;

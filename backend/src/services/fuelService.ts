@@ -60,7 +60,7 @@ export class FuelService {
 
         query += ' ORDER BY f.created_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as FuelRecordWithCourier[];
     }
 
@@ -68,7 +68,7 @@ export class FuelService {
      * Obtener registro por ID
      */
     static async getById(id: string, tenantId: string): Promise<FuelRecordWithCourier | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 f.*,
                 c.name as courier_name
@@ -85,7 +85,7 @@ export class FuelService {
      * Obtener registros por courier
      */
     static async getByCourier(courierId: string, tenantId: string): Promise<FuelRecord[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM fuel_records WHERE courier_id = ? AND tenant_id = ? ORDER BY created_at DESC',
             [courierId, tenantId]
         );
@@ -112,7 +112,7 @@ export class FuelService {
         }
 
         // Obtener último registro del courier
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT odometer_reading 
              FROM fuel_records 
              WHERE courier_id = ? AND tenant_id = ? AND odometer_reading IS NOT NULL
@@ -161,7 +161,7 @@ export class FuelService {
             );
         }
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO fuel_records (
                 id, tenant_id, courier_id, vehicle_id, liters, cost, price_per_liter,
                 odometer_reading, previous_odometer, distance_traveled, efficiency,
@@ -192,7 +192,7 @@ export class FuelService {
      * Eliminar registro
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM fuel_records WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -229,7 +229,7 @@ export class FuelService {
             params.push(period.endDate);
         }
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         const stats = (rows as any[])[0];
 
         return {

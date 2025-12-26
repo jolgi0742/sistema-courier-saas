@@ -14,21 +14,21 @@ router.get('/stats', tenantMiddleware, async (req: Request, res: Response) => {
         const tenantId = req.tenant!.id;
 
         // Paquetes de hoy
-        const [packagesToday] = await pool.execute(
+        const { rows: packagesToday } = await pool.query(
             `SELECT COUNT(*) as count FROM packages 
              WHERE tenant_id = ? AND DATE(created_at) = CURDATE()`,
             [tenantId]
         );
 
         // Paquetes en tránsito
-        const [packagesInTransit] = await pool.execute(
+        const { rows: packagesInTransit } = await pool.query(
             `SELECT COUNT(*) as count FROM packages 
              WHERE tenant_id = ? AND status IN ('in_transit', 'out_for_delivery')`,
             [tenantId]
         );
 
         // Clientes activos
-        const [activeClients] = await pool.execute(
+        const { rows: activeClients } = await pool.query(
             `SELECT COUNT(*) as count FROM clients 
              WHERE tenant_id = ? AND status = 'active'`,
             [tenantId]
@@ -57,7 +57,7 @@ router.get('/recent-packages', tenantMiddleware, async (req: Request, res: Respo
     try {
         const tenantId = req.tenant!.id;
 
-        const [packages] = await pool.execute(
+        const { rows: packages } = await pool.query(
             `SELECT 
                 p.id,
                 p.tracking_number,
@@ -88,13 +88,13 @@ router.get('/performance', tenantMiddleware, async (req: Request, res: Response)
         const tenantId = req.tenant!.id;
 
         // Total de paquetes
-        const [totalPackages] = await pool.execute(
+        const { rows: totalPackages } = await pool.query(
             `SELECT COUNT(*) as count FROM packages WHERE tenant_id = ?`,
             [tenantId]
         );
 
         // Paquetes entregados
-        const [deliveredPackages] = await pool.execute(
+        const { rows: deliveredPackages } = await pool.query(
             `SELECT COUNT(*) as count FROM packages 
              WHERE tenant_id = ? AND status = 'delivered'`,
             [tenantId]
@@ -107,7 +107,7 @@ router.get('/performance', tenantMiddleware, async (req: Request, res: Response)
         const customerSatisfaction = 4.8;
 
         // Incidentes (paquetes cancelados o con problemas)
-        const [incidents] = await pool.execute(
+        const { rows: incidents } = await pool.query(
             `SELECT COUNT(*) as count FROM packages 
              WHERE tenant_id = ? AND status = 'cancelled'`,
             [tenantId]

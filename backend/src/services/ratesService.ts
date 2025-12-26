@@ -32,7 +32,7 @@ export class RatesService {
 
         query += ' ORDER BY zone, service_type, min_weight';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as Rate[];
     }
 
@@ -40,7 +40,7 @@ export class RatesService {
      * Obtener tarifa por ID
      */
     static async getById(id: string, tenantId: string): Promise<Rate | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM rates WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -54,7 +54,7 @@ export class RatesService {
     static async create(data: Omit<Rate, 'id' | 'created_at' | 'updated_at'>, tenantId: string): Promise<Rate> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO rates (
                 id, tenant_id, name, description, zone, min_weight, max_weight,
                 base_price, price_per_kg, service_type, active
@@ -127,7 +127,7 @@ export class RatesService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE rates SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -139,7 +139,7 @@ export class RatesService {
      * Eliminar tarifa
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM rates WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -156,7 +156,7 @@ export class RatesService {
         tenantId: string
     ): Promise<{ rate: Rate | null; totalPrice: number }> {
         // Buscar tarifa que coincida con zona, peso y tipo de servicio
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT * FROM rates 
              WHERE tenant_id = ? 
              AND zone = ? 
@@ -187,7 +187,7 @@ export class RatesService {
      * Obtener zonas disponibles
      */
     static async getZones(tenantId: string): Promise<string[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT DISTINCT zone FROM rates WHERE tenant_id = ? AND zone IS NOT NULL ORDER BY zone',
             [tenantId]
         );

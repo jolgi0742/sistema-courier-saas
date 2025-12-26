@@ -54,7 +54,7 @@ export class ArrivalsService {
 
         query += ' ORDER BY pa.arrived_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as PackageArrivalWithDetails[];
     }
 
@@ -62,7 +62,7 @@ export class ArrivalsService {
      * Obtener llegada por ID
      */
     static async getById(id: string, tenantId: string): Promise<PackageArrivalWithDetails | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 pa.*,
                 p.tracking_number,
@@ -83,7 +83,7 @@ export class ArrivalsService {
      * Obtener llegadas por paquete
      */
     static async getByPackage(packageId: string, tenantId: string): Promise<PackageArrival[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM package_arrivals WHERE package_id = ? AND tenant_id = ? ORDER BY arrived_at DESC',
             [packageId, tenantId]
         );
@@ -117,7 +117,7 @@ export class ArrivalsService {
 
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO package_arrivals (
                 id, tenant_id, package_id, received_by, condition_status, notes
             ) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -159,7 +159,7 @@ export class ArrivalsService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE package_arrivals SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -171,7 +171,7 @@ export class ArrivalsService {
      * Eliminar llegada
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM package_arrivals WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -202,7 +202,7 @@ export class ArrivalsService {
             params.push(date);
         }
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
 
         const stats = (rows as any[])[0];
 

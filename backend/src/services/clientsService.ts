@@ -41,7 +41,7 @@ export class ClientsService {
     static async create(input: CreateClientInput): Promise<Client> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO clients (
         id, tenant_id, name, email, phone, company_name, 
         address, city, country, tax_id, credit_limit, status
@@ -61,7 +61,7 @@ export class ClientsService {
      * Obtener cliente por ID
      */
     static async getById(id: string, tenantId: string): Promise<Client | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM clients WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -72,7 +72,7 @@ export class ClientsService {
      * Obtener cliente por email
      */
     static async getByEmail(email: string, tenantId: string): Promise<Client | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM clients WHERE email = ? AND tenant_id = ?',
             [email, tenantId]
         );
@@ -106,7 +106,7 @@ export class ClientsService {
         }
 
         // Count
-        const [countRows] = await pool.execute(countQuery, params) as any;
+        const { rows: countRows } = await pool.query(countQuery, params) as any;
         const total = countRows[0]?.total || 0;
 
         // Results
@@ -118,7 +118,7 @@ export class ClientsService {
             }
         }
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return { clients: rows as Client[], total };
     }
 
@@ -145,7 +145,7 @@ export class ClientsService {
         updates.push('updated_at = NOW()');
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE clients SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -157,7 +157,7 @@ export class ClientsService {
      * Actualizar balance de crédito
      */
     static async updateCreditBalance(id: string, tenantId: string, amount: number): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE clients SET credit_balance = credit_balance + ?, updated_at = NOW() 
        WHERE id = ? AND tenant_id = ?`,
             [amount, id, tenantId]
@@ -168,7 +168,7 @@ export class ClientsService {
      * Incrementar contador de paquetes
      */
     static async incrementPackages(id: string, tenantId: string): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE clients SET total_packages = total_packages + 1, updated_at = NOW() 
        WHERE id = ? AND tenant_id = ?`,
             [id, tenantId]
@@ -179,7 +179,7 @@ export class ClientsService {
      * Obtener paquetes del cliente
      */
     static async getPackages(id: string, tenantId: string, limit = 50): Promise<any[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT * FROM packages WHERE client_id = ? AND tenant_id = ? 
        ORDER BY created_at DESC LIMIT ?`,
             [id, tenantId, limit]
@@ -191,7 +191,7 @@ export class ClientsService {
      * Estadísticas de clientes
      */
     static async getStats(tenantId: string): Promise<Record<string, any>> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
         COUNT(*) as total,
         SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
@@ -201,7 +201,7 @@ export class ClientsService {
             [tenantId]
         ) as any;
 
-        const [topRows] = await pool.execute(
+        const { rows: topRows } = await pool.query(
             `SELECT id, name, company_name, total_packages FROM clients 
        WHERE tenant_id = ? ORDER BY total_packages DESC LIMIT 5`,
             [tenantId]
@@ -218,7 +218,7 @@ export class ClientsService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         // Solo eliminar si no tiene paquetes
-        const [packages] = await pool.execute(
+        const { rows: packages } = await pool.query(
             'SELECT COUNT(*) as count FROM packages WHERE client_id = ? AND tenant_id = ?',
             [id, tenantId]
         ) as any;
@@ -229,7 +229,7 @@ export class ClientsService {
             return true;
         }
 
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM clients WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         ) as any;

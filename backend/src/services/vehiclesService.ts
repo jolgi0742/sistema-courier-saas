@@ -43,7 +43,7 @@ export class VehiclesService {
 
         query += ' ORDER BY v.created_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as VehicleWithCourier[];
     }
 
@@ -51,7 +51,7 @@ export class VehiclesService {
      * Obtener vehículo por ID
      */
     static async getById(id: string, tenantId: string): Promise<VehicleWithCourier | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 v.*,
                 c.name as courier_name
@@ -70,7 +70,7 @@ export class VehiclesService {
     static async create(data: Omit<Vehicle, 'id' | 'created_at'>, tenantId: string): Promise<Vehicle> {
         const id = uuidv4();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO vehicles (
                 id, tenant_id, plate, brand, model, year, type, assigned_to, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -132,7 +132,7 @@ export class VehiclesService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE vehicles SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -144,7 +144,7 @@ export class VehiclesService {
      * Eliminar vehículo
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM vehicles WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -160,7 +160,7 @@ export class VehiclesService {
         maintenance: number;
         inactive: number;
     }> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,

@@ -17,7 +17,7 @@ interface Notification {
 export class NotificationsService {
     // Obtener notificaciones del usuario
     static async getNotifications(userId: string, tenantId: string, limit: number = 50) {
-        const [notifications] = await pool.query(
+        const { rows: notifications } = await pool.query(
             `SELECT * FROM notifications 
        WHERE user_id = ? AND tenant_id = ? 
        ORDER BY created_at DESC 
@@ -47,7 +47,7 @@ export class NotificationsService {
             ]
         );
 
-        const [notification] = await pool.query(
+        const { rows: notification } = await pool.query(
             'SELECT * FROM notifications WHERE id = ?',
             [id]
         );
@@ -78,7 +78,7 @@ export class NotificationsService {
 
     // Obtener contador de no leídas
     static async getUnreadCount(userId: string, tenantId: string) {
-        const [result] = await pool.query(
+        const { rows: result } = await pool.query(
             `SELECT COUNT(*) as count 
        FROM notifications 
        WHERE user_id = ? AND tenant_id = ? AND is_read = FALSE`,

@@ -108,7 +108,7 @@ export class PayPalService {
         }
 
         // Obtener precio del plan
-        const [planRows] = await pool.execute(
+        const { rows: planRows } = await pool.query(
             `SELECT name, price_monthly, price_annual FROM plans WHERE id = ?`,
             [input.plan_id]
         ) as any;
@@ -201,7 +201,7 @@ export class PayPalService {
 
             if (customData.tenant_id && customData.plan_id) {
                 // Registrar pago en base de datos
-                await pool.execute(
+                await pool.query(
                     `INSERT INTO paypal_payments (id, tenant_id, paypal_order_id, plan_id, amount, currency, status, created_at)
                      VALUES (UUID(), ?, ?, ?, ?, ?, ?, NOW())`,
                     [
@@ -251,7 +251,7 @@ export class PayPalService {
      * Obtener historial de pagos PayPal de un tenant
      */
     static async getPaymentHistory(tenantId: string): Promise<any[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT * FROM paypal_payments WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 20`,
             [tenantId]
         ) as any;

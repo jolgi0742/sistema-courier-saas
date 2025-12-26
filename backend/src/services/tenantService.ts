@@ -25,7 +25,7 @@ export class TenantService {
      * Obtener tenant por ID
      */
     static async getById(id: string): Promise<Tenant | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM tenants WHERE id = ?',
             [id]
         );
@@ -36,7 +36,7 @@ export class TenantService {
      * Obtener tenant por subdominio
      */
     static async getBySubdomain(subdomain: string): Promise<Tenant | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM tenants WHERE subdomain = ?',
             [subdomain.toLowerCase()]
         );
@@ -47,7 +47,7 @@ export class TenantService {
      * Obtener tenant por dominio personalizado
      */
     static async getByCustomDomain(domain: string): Promise<Tenant | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT t.* FROM tenants t
        INNER JOIN tenant_domains td ON t.id = td.tenant_id
        WHERE td.domain = ? AND td.ssl_status = 'active'`,
@@ -76,21 +76,21 @@ export class TenantService {
             throw new Error('Este subdominio está reservado');
         }
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO tenants (id, name, subdomain, status, plan_id, trial_ends_at)
        VALUES (?, ?, ?, 'trial', 'trial', ?)`,
             [id, input.name, input.subdomain.toLowerCase(), trialEndsAt]
         );
 
         // Crear branding por defecto
-        await pool.execute(
+        await pool.query(
             `INSERT INTO tenant_branding (tenant_id, company_name, primary_color, secondary_color, accent_color)
        VALUES (?, ?, '#3B82F6', '#1E40AF', '#10B981')`,
             [id, input.name]
         );
 
         // Crear dominio de subdominio
-        await pool.execute(
+        await pool.query(
             `INSERT INTO tenant_domains (id, tenant_id, domain_type, domain, is_primary, ssl_status)
        VALUES (?, ?, 'subdomain', ?, TRUE, 'active')`,
             [uuidv4(), id, `${input.subdomain.toLowerCase()}.sistemacourier.com`]
@@ -123,7 +123,7 @@ export class TenantService {
 
         if (updates.length > 0) {
             values.push(id);
-            await pool.execute(
+            await pool.query(
                 `UPDATE tenants SET ${updates.join(', ')} WHERE id = ?`,
                 values
             );
@@ -136,7 +136,7 @@ export class TenantService {
      * Activar tenant (después de pago)
      */
     static async activate(id: string, planId: string): Promise<Tenant> {
-        await pool.execute(
+        await pool.query(
             `UPDATE tenants SET status = 'active', plan_id = ?, trial_ends_at = NULL WHERE id = ?`,
             [planId, id]
         );
@@ -147,7 +147,7 @@ export class TenantService {
      * Suspender tenant
      */
     static async suspend(id: string, reason?: string): Promise<Tenant> {
-        await pool.execute(
+        await pool.query(
             `UPDATE tenants SET status = 'suspended' WHERE id = ?`,
             [id]
         );
@@ -159,7 +159,7 @@ export class TenantService {
      * Cancelar tenant
      */
     static async cancel(id: string): Promise<Tenant> {
-        await pool.execute(
+        await pool.query(
             `UPDATE tenants SET status = 'cancelled' WHERE id = ?`,
             [id]
         );
@@ -199,7 +199,7 @@ export class TenantService {
         }
 
         // Count total
-        const [countRows] = await pool.execute(countQuery, values);
+        const { rows: countRows } = await pool.query(countQuery, values);
         const total = (countRows as any)[0].total;
 
         // Add pagination
@@ -211,7 +211,7 @@ export class TenantService {
             }
         }
 
-        const [rows] = await pool.execute(query, values);
+        const { rows } = await pool.query(query, values);
         return { tenants: rows as Tenant[], total };
     }
 

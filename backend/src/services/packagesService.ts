@@ -66,7 +66,7 @@ export class PackagesService {
         const id = uuidv4();
         const tracking_number = this.generateTrackingNumber();
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO packages (
         id, tenant_id, tracking_number, client_id,
         sender_name, sender_phone, recipient_name, recipient_phone,
@@ -87,7 +87,7 @@ export class PackagesService {
      * Obtener paquete por ID (con validación de tenant)
      */
     static async getById(id: string, tenantId: string): Promise<Package | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM packages WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -98,7 +98,7 @@ export class PackagesService {
      * Obtener paquete por tracking number
      */
     static async getByTracking(tracking: string, tenantId: string): Promise<Package | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM packages WHERE tracking_number = ? AND tenant_id = ?',
             [tracking, tenantId]
         );
@@ -151,7 +151,7 @@ export class PackagesService {
         }
 
         // Count total
-        const [countRows] = await pool.execute(countQuery, params) as any;
+        const { rows: countRows } = await pool.query(countQuery, params) as any;
         const total = countRows[0]?.total || 0;
 
         // Add pagination
@@ -163,7 +163,7 @@ export class PackagesService {
             }
         }
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return { packages: rows as Package[], total };
     }
 
@@ -171,7 +171,7 @@ export class PackagesService {
      * Actualizar estado del paquete
      */
     static async updateStatus(id: string, tenantId: string, status: string): Promise<Package | null> {
-        await pool.execute(
+        await pool.query(
             'UPDATE packages SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?',
             [status, id, tenantId]
         );
@@ -182,7 +182,7 @@ export class PackagesService {
      * Asignar courier a paquete
      */
     static async assignCourier(id: string, tenantId: string, courierId: string): Promise<Package | null> {
-        await pool.execute(
+        await pool.query(
             `UPDATE packages SET courier_id = ?, status = 'assigned', updated_at = NOW() 
        WHERE id = ? AND tenant_id = ?`,
             [courierId, id, tenantId]
@@ -212,7 +212,7 @@ export class PackagesService {
         updates.push('updated_at = NOW()');
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE packages SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -224,7 +224,7 @@ export class PackagesService {
      * Eliminar paquete
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM packages WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         ) as any;
@@ -235,7 +235,7 @@ export class PackagesService {
      * Estadísticas de paquetes
      */
     static async getStats(tenantId: string): Promise<Record<string, number>> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT status, COUNT(*) as count FROM packages 
        WHERE tenant_id = ? GROUP BY status`,
             [tenantId]

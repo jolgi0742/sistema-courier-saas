@@ -84,7 +84,7 @@ export class DocumentsService {
 
         query += ' ORDER BY d.expiration_date ASC, d.created_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         return rows as DocumentWithEntity[];
     }
 
@@ -92,7 +92,7 @@ export class DocumentsService {
      * Obtener documento por ID
      */
     static async getById(id: string, tenantId: string): Promise<DocumentWithEntity | null> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 d.*,
                 CASE 
@@ -117,7 +117,7 @@ export class DocumentsService {
      * Obtener documentos por entidad
      */
     static async getByEntity(entityType: string, entityId: string, tenantId: string): Promise<Document[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM documents WHERE entity_type = ? AND entity_id = ? AND tenant_id = ? ORDER BY expiration_date ASC',
             [entityType, entityId, tenantId]
         );
@@ -128,7 +128,7 @@ export class DocumentsService {
      * Obtener documentos próximos a vencer
      */
     static async getExpiring(tenantId: string, days: number = 30): Promise<DocumentWithEntity[]> {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 d.*,
                 CASE 
@@ -159,7 +159,7 @@ export class DocumentsService {
         const id = uuidv4();
         const status = this.calculateStatus(data.expiration_date);
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO documents (
                 id, tenant_id, entity_type, entity_id, document_type, document_number,
                 file_url, file_name, issue_date, expiration_date, status, notes
@@ -229,7 +229,7 @@ export class DocumentsService {
 
         values.push(id, tenantId);
 
-        await pool.execute(
+        await pool.query(
             `UPDATE documents SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
             values
         );
@@ -241,7 +241,7 @@ export class DocumentsService {
      * Eliminar documento
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
-        const [result] = await pool.execute(
+        const { rows: result } = await pool.query(
             'DELETE FROM documents WHERE id = ? AND tenant_id = ?',
             [id, tenantId]
         );
@@ -252,7 +252,7 @@ export class DocumentsService {
      * Actualizar estados de todos los documentos
      */
     static async updateStatuses(tenantId: string): Promise<void> {
-        await pool.execute(
+        await pool.query(
             `UPDATE documents 
              SET status = CASE
                  WHEN expiration_date IS NULL THEN 'valid'
@@ -277,7 +277,7 @@ export class DocumentsService {
         // Actualizar estados primero
         await this.updateStatuses(tenantId);
 
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'valid' THEN 1 ELSE 0 END) as valid,

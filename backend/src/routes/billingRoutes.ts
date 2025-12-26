@@ -19,7 +19,7 @@ const stripe = STRIPE_ENABLED
 router.get('/plans', async (req: Request, res: Response) => {
     try {
         const pool = (await import('../config/database')).default;
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM plans WHERE is_active = TRUE ORDER BY price_monthly ASC'
         );
 
@@ -65,7 +65,7 @@ router.post('/create-checkout-session', tenantMiddleware, async (req: Request, r
         const pool = (await import('../config/database')).default;
         const priceField = billing_cycle === 'annual' ? 'stripe_price_id_annual' : 'stripe_price_id_monthly';
 
-        const [planRows] = await pool.execute(
+        const { rows: planRows } = await pool.query(
             `SELECT ${priceField} as stripe_price_id, name FROM plans WHERE id = ?`,
             [plan_id]
         ) as any;
@@ -130,7 +130,7 @@ router.get('/subscription', tenantMiddleware, async (req: Request, res: Response
         const tenantId = req.tenant!.id;
         const pool = (await import('../config/database')).default;
 
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             `SELECT s.*, p.name as plan_name, p.limits, p.features
        FROM subscriptions s
        LEFT JOIN plans p ON s.plan_id = p.id
