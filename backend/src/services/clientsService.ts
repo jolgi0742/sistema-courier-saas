@@ -62,7 +62,7 @@ export class ClientsService {
      */
     static async getById(id: string, tenantId: string): Promise<Client | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM clients WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM clients WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (rows as Client[])[0] || null;
@@ -73,7 +73,7 @@ export class ClientsService {
      */
     static async getByEmail(email: string, tenantId: string): Promise<Client | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM clients WHERE email = ? AND tenant_id = ?',
+            'SELECT * FROM clients WHERE email = $1 AND tenant_id = $2',
             [email, tenantId]
         );
         return (rows as Client[])[0] || null;
@@ -88,26 +88,26 @@ export class ClientsService {
         limit?: number;
         offset?: number;
     }): Promise<{ clients: Client[]; total: number }> {
-        let query = 'SELECT * FROM clients WHERE tenant_id = ?';
-        let countQuery = 'SELECT COUNT(*) as total FROM clients WHERE tenant_id = ?';
+        let query = 'SELECT * FROM clients WHERE tenant_id = $1';
+        let countQuery = 'SELECT COUNT(*) as total FROM clients WHERE tenant_id = $1';
         const params: any[] = [tenantId];
 
         if (filters?.status) {
-            query += ' AND status = ?';
-            countQuery += ' AND status = ?';
+            query += ' AND status = $1';
+            countQuery += ' AND status = $1';
             params.push(filters.status);
         }
 
         if (filters?.search) {
-            query += ' AND (name LIKE ? OR email LIKE ? OR company_name LIKE ? OR phone LIKE ?)';
-            countQuery += ' AND (name LIKE ? OR email LIKE ? OR company_name LIKE ? OR phone LIKE ?)';
+            query += ' AND (name LIKE $1 OR email LIKE $2 OR company_name LIKE $3 OR phone LIKE $4)';
+            countQuery += ' AND (name LIKE $1 OR email LIKE $2 OR company_name LIKE $3 OR phone LIKE $4)';
             const searchTerm = `%${filters.search}%`;
             params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
         // Count
         const { rows: countRows } = await pool.query(countQuery, params) as any;
-        const total = countRows[0]$1.total || 0;
+        const total = countRows[0].total || 0;
 
         // Results
         query += ' ORDER BY name ASC';
@@ -219,7 +219,7 @@ export class ClientsService {
     static async delete(id: string, tenantId: string): Promise<boolean> {
         // Solo eliminar si no tiene paquetes
         const { rows: packages } = await pool.query(
-            'SELECT COUNT(*) as count FROM packages WHERE client_id = ? AND tenant_id = ?',
+            'SELECT COUNT(*) as count FROM packages WHERE client_id = $1 AND tenant_id = $2',
             [id, tenantId]
         ) as any;
 
@@ -230,7 +230,7 @@ export class ClientsService {
         }
 
         const { rows: result } = await pool.query(
-            'DELETE FROM clients WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM clients WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         ) as any;
 

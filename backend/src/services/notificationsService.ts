@@ -48,7 +48,7 @@ export class NotificationsService {
         );
 
         const { rows: notification } = await pool.query(
-            'SELECT * FROM notifications WHERE id = ?',
+            'SELECT * FROM notifications WHERE id = $1',
             [id]
         );
         return notification[0];
@@ -90,7 +90,7 @@ export class NotificationsService {
     // Eliminar notificación
     static async deleteNotification(notificationId: string, userId: string) {
         await pool.query(
-            'DELETE FROM notifications WHERE id = ? AND user_id = ?',
+            'DELETE FROM notifications WHERE id = $1 AND user_id = $2',
             [notificationId, userId]
         );
         return { success: true };

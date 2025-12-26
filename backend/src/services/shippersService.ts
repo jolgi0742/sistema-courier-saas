@@ -22,11 +22,11 @@ export class ShippersService {
      * Obtener todos los remitentes frecuentes
      */
     static async getAll(tenantId: string, search?: string): Promise<FrequentShipper[]> {
-        let query = 'SELECT * FROM frequent_shippers WHERE tenant_id = ?';
+        let query = 'SELECT * FROM frequent_shippers WHERE tenant_id = $1';
         const params: any[] = [tenantId];
 
         if (search) {
-            query += ' AND (name LIKE ? OR phone LIKE ? OR email LIKE ?)';
+            query += ' AND (name LIKE $1 OR phone LIKE $2 OR email LIKE $3)';
             const searchTerm = `%${search}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
@@ -146,7 +146,7 @@ export class ShippersService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM frequent_shippers WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM frequent_shippers WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -157,7 +157,7 @@ export class ShippersService {
      */
     static async incrementShipments(id: string, tenantId: string): Promise<void> {
         await pool.query(
-            'UPDATE frequent_shippers SET total_shipments = total_shipments + 1 WHERE id = ? AND tenant_id = ?',
+            'UPDATE frequent_shippers SET total_shipments = total_shipments + 1 WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
     }
@@ -171,13 +171,13 @@ export class ShippersService {
         topShippers: FrequentShipper[];
     }> {
         const { rows: countRows } = await pool.query(
-            'SELECT COUNT(*) as total, SUM(total_shipments) as totalShipments FROM frequent_shippers WHERE tenant_id = ?',
+            'SELECT COUNT(*) as total, SUM(total_shipments) as totalShipments FROM frequent_shippers WHERE tenant_id = $1',
             [tenantId]
         );
         const stats = (countRows as any[])[0];
 
         const { rows: topRows } = await pool.query(
-            'SELECT * FROM frequent_shippers WHERE tenant_id = ? ORDER BY total_shipments DESC LIMIT 5',
+            'SELECT * FROM frequent_shippers WHERE tenant_id = $1 ORDER BY total_shipments DESC LIMIT 5',
             [tenantId]
         );
 

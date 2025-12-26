@@ -26,7 +26,7 @@ export class BrandingService {
      */
     static async getByTenantId(tenantId: string): Promise<TenantBranding | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM tenant_branding WHERE tenant_id = ?',
+            'SELECT * FROM tenant_branding WHERE tenant_id = $1',
             [tenantId]
         );
         return (rows as TenantBranding[])[0] || null;
@@ -95,7 +95,7 @@ export class BrandingService {
             type === 'logo_white' $2 'logo_white_url' : 'favicon_url';
 
         await pool.query(
-            `UPDATE tenant_branding SET ${fieldName} = ? WHERE tenant_id = ?`,
+            `UPDATE tenant_branding SET ${fieldName} = $1 WHERE tenant_id = $2`,
             [dataUrl, tenantId]
         );
 

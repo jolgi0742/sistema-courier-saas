@@ -37,16 +37,16 @@ export class WarehouseService {
         zone?: string;
         status?: string;
     }): Promise<WarehouseLocation[]> {
-        let query = 'SELECT * FROM warehouse_locations WHERE tenant_id = ?';
+        let query = 'SELECT * FROM warehouse_locations WHERE tenant_id = $1';
         const params: any[] = [tenantId];
 
         if (filters?.zone) {
-            query += ' AND zone = ?';
+            query += ' AND zone = $1';
             params.push(filters.zone);
         }
 
         if (filters?.status) {
-            query += ' AND status = ?';
+            query += ' AND status = $1';
             params.push(filters.status);
         }
 
@@ -61,7 +61,7 @@ export class WarehouseService {
      */
     static async getLocationById(id: string, tenantId: string): Promise<WarehouseLocation | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM warehouse_locations WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM warehouse_locations WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         const locations = rows as WarehouseLocation[];
@@ -73,7 +73,7 @@ export class WarehouseService {
      */
     static async getLocationByCode(code: string, tenantId: string): Promise<WarehouseLocation | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM warehouse_locations WHERE code = ? AND tenant_id = ?',
+            'SELECT * FROM warehouse_locations WHERE code = $1 AND tenant_id = $2',
             [code, tenantId]
         );
         const locations = rows as WarehouseLocation[];
@@ -151,7 +151,7 @@ export class WarehouseService {
      */
     static async deleteLocation(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM warehouse_locations WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM warehouse_locations WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -165,14 +165,14 @@ export class WarehouseService {
 
         // Verificar si el paquete ya tiene una ubicación activa
         const { rows: existing } = await pool.query(
-            'SELECT id FROM package_locations WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
+            'SELECT id FROM package_locations WHERE package_id = $1 AND tenant_id = $2 AND removed_at IS NULL',
             [packageId, tenantId]
         );
 
         if ((existing as any[]).length > 0) {
             // Remover ubicación anterior
             await pool.query(
-                'UPDATE package_locations SET removed_at = CURRENT_TIMESTAMP WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
+                'UPDATE package_locations SET removed_at = CURRENT_TIMESTAMP WHERE package_id = $1 AND tenant_id = $2 AND removed_at IS NULL',
                 [packageId, tenantId]
             );
         }
@@ -189,7 +189,7 @@ export class WarehouseService {
         await this.updateLocationPackageCount(locationId, tenantId);
 
         const { rows } = await pool.query(
-            'SELECT * FROM package_locations WHERE id = ?',
+            'SELECT * FROM package_locations WHERE id = $1',
             [id]
         );
         return (rows as PackageLocation[])[0];
@@ -200,14 +200,14 @@ export class WarehouseService {
      */
     static async removePackage(packageId: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'UPDATE package_locations SET removed_at = CURRENT_TIMESTAMP WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
+            'UPDATE package_locations SET removed_at = CURRENT_TIMESTAMP WHERE package_id = $1 AND tenant_id = $2 AND removed_at IS NULL',
             [packageId, tenantId]
         );
 
         if ((result as any).affectedRows > 0) {
             // Actualizar contador de paquetes
             const { rows: locationRows } = await pool.query(
-                'SELECT location_id FROM package_locations WHERE package_id = ? AND tenant_id = ? ORDER BY assigned_at DESC LIMIT 1',
+                'SELECT location_id FROM package_locations WHERE package_id = $1 AND tenant_id = $2 ORDER BY assigned_at DESC LIMIT 1',
                 [packageId, tenantId]
             );
             if ((locationRows as any[]).length > 0) {
@@ -329,7 +329,7 @@ export class WarehouseService {
      */
     static async getZones(tenantId: string): Promise<string[]> {
         const { rows } = await pool.query(
-            'SELECT DISTINCT zone FROM warehouse_locations WHERE tenant_id = ? AND zone IS NOT NULL ORDER BY zone',
+            'SELECT DISTINCT zone FROM warehouse_locations WHERE tenant_id = $1 AND zone IS NOT NULL ORDER BY zone',
             [tenantId]
         );
         return (rows as any[]).map(row => row.zone);

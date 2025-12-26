@@ -43,12 +43,12 @@ export class ArrivalsService {
         const params: any[] = [tenantId];
 
         if (filters?.date) {
-            query += ' AND DATE(pa.arrived_at) = ?';
+            query += ' AND DATE(pa.arrived_at) = $1';
             params.push(filters.date);
         }
 
         if (filters?.condition) {
-            query += ' AND pa.condition_status = ?';
+            query += ' AND pa.condition_status = $1';
             params.push(filters.condition);
         }
 
@@ -84,7 +84,7 @@ export class ArrivalsService {
      */
     static async getByPackage(packageId: string, tenantId: string): Promise<PackageArrival[]> {
         const { rows } = await pool.query(
-            'SELECT * FROM package_arrivals WHERE package_id = ? AND tenant_id = ? ORDER BY arrived_at DESC',
+            'SELECT * FROM package_arrivals WHERE package_id = $1 AND tenant_id = $2 ORDER BY arrived_at DESC',
             [packageId, tenantId]
         );
         return rows as PackageArrival[];
@@ -172,7 +172,7 @@ export class ArrivalsService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM package_arrivals WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM package_arrivals WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -198,7 +198,7 @@ export class ArrivalsService {
         const params: any[] = [tenantId];
 
         if (date) {
-            query += ' AND DATE(arrived_at) = ?';
+            query += ' AND DATE(arrived_at) = $1';
             params.push(date);
         }
 

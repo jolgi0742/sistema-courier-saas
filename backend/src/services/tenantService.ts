@@ -26,7 +26,7 @@ export class TenantService {
      */
     static async getById(id: string): Promise<Tenant | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM tenants WHERE id = ?',
+            'SELECT * FROM tenants WHERE id = $1',
             [id]
         );
         return (rows as Tenant[])[0] || null;
@@ -37,7 +37,7 @@ export class TenantService {
      */
     static async getBySubdomain(subdomain: string): Promise<Tenant | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM tenants WHERE subdomain = ?',
+            'SELECT * FROM tenants WHERE subdomain = $1',
             [subdomain.toLowerCase()]
         );
         return (rows as Tenant[])[0] || null;
@@ -124,7 +124,7 @@ export class TenantService {
         if (updates.length > 0) {
             values.push(id);
             await pool.query(
-                `UPDATE tenants SET ${updates.join(', ')} WHERE id = ?`,
+                `UPDATE tenants SET ${updates.join(', ')} WHERE id = $1`,
                 values
             );
         }
@@ -181,20 +181,20 @@ export class TenantService {
         const values: any[] = [];
 
         if (filters?.status) {
-            query += ' AND status = ?';
-            countQuery += ' AND status = ?';
+            query += ' AND status = $1';
+            countQuery += ' AND status = $1';
             values.push(filters.status);
         }
 
         if (filters?.plan_id) {
-            query += ' AND plan_id = ?';
-            countQuery += ' AND plan_id = ?';
+            query += ' AND plan_id = $1';
+            countQuery += ' AND plan_id = $1';
             values.push(filters.plan_id);
         }
 
         if (filters?.search) {
-            query += ' AND (name LIKE ? OR subdomain LIKE ?)';
-            countQuery += ' AND (name LIKE ? OR subdomain LIKE ?)';
+            query += ' AND (name LIKE $1 OR subdomain LIKE $2)';
+            countQuery += ' AND (name LIKE $1 OR subdomain LIKE $2)';
             values.push(`%${filters.search}%`, `%${filters.search}%`);
         }
 

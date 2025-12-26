@@ -248,7 +248,7 @@ export class BillingService {
                 const customerId = invoice.customer as string;
 
                 const { rows } = await pool.query(
-                    'SELECT tenant_id FROM subscriptions WHERE stripe_customer_id = ?',
+                    'SELECT tenant_id FROM subscriptions WHERE stripe_customer_id = $1',
                     [customerId]
                 ) as any;
 
@@ -268,7 +268,7 @@ export class BillingService {
                 const customerId = subscription.customer as string;
 
                 const { rows } = await pool.query(
-                    'SELECT tenant_id FROM subscriptions WHERE stripe_customer_id = ?',
+                    'SELECT tenant_id FROM subscriptions WHERE stripe_customer_id = $1',
                     [customerId]
                 ) as any;
 

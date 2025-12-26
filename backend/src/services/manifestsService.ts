@@ -36,7 +36,7 @@ export class ManifestsService {
      */
     private static async generateManifestNumber(tenantId: string): Promise<string> {
         const { rows } = await pool.query(
-            'SELECT COUNT(*) as count FROM cargo_manifests WHERE tenant_id = ?',
+            'SELECT COUNT(*) as count FROM cargo_manifests WHERE tenant_id = $1',
             [tenantId]
         );
         const count = (rows as any[])[0].count + 1;
@@ -57,7 +57,7 @@ export class ManifestsService {
                 c.name as courier_name
             FROM cargo_manifests cm
             LEFT JOIN couriers c ON cm.courier_id = c.id
-            WHERE cm.tenant_id = ?
+            WHERE cm.tenant_id = $1
         `;
         const params: any[] = [tenantId];
 
@@ -99,7 +99,7 @@ export class ManifestsService {
                 c.name as courier_name
             FROM cargo_manifests cm
             LEFT JOIN couriers c ON cm.courier_id = c.id
-            WHERE cm.id = ? AND cm.tenant_id = ?`,
+            WHERE cm.id = $1 AND cm.tenant_id = $2`,
             [id, tenantId]
         );
         const manifests = rows as ManifestWithDetails[];
@@ -220,7 +220,7 @@ export class ManifestsService {
 
         // Obtener el último número de secuencia
         const { rows } = await pool.query(
-            'SELECT MAX(sequence_number) as max_seq FROM manifest_packages WHERE manifest_id = ?',
+            'SELECT MAX(sequence_number) as max_seq FROM manifest_packages WHERE manifest_id = $1',
             [manifestId]
         );
         let sequenceNumber = ((rows as any[])[0].max_seq || 0) + 1;
@@ -250,7 +250,7 @@ export class ManifestsService {
         }
 
         const { rows: result } = await pool.query(
-            'DELETE FROM manifest_packages WHERE manifest_id = ? AND package_id = ?',
+            'DELETE FROM manifest_packages WHERE manifest_id = $1 AND package_id = $2',
             [manifestId, packageId]
         );
 
@@ -281,7 +281,7 @@ export class ManifestsService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM cargo_manifests WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM cargo_manifests WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;

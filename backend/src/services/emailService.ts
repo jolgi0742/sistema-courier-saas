@@ -39,7 +39,7 @@ export class EmailService {
 
         // Obtener info del tenant
         const { rows: tenantRows } = await pool.query(
-            'SELECT plan_id FROM tenants WHERE id = ?',
+            'SELECT plan_id FROM tenants WHERE id = $1',
             [tenantId]
         ) as any;
         const isEnterprise = tenantRows[0]?.plan_id === 'enterprise';
@@ -198,7 +198,7 @@ export class EmailService {
             'SELECT plan_id FROM tenants WHERE id = $1',
             [tenantId]
         ) as any;
-        const isEnterprise = tenantRows[0]$2.plan_id === 'enterprise';
+        const isEnterprise = tenantRows[0].plan_id === 'enterprise';
 
         const fromEmail = isEnterprise && branding$3.contact_email
             $4 branding.contact_email
@@ -212,7 +212,7 @@ export class EmailService {
             subject,
             html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${branding?.logo_url ? `<img src="${branding.logo_url}" alt="${fromName}" style="max-height: 50px; margin-bottom: 20px;">` : ''}
+          ${branding$1.logo_url $2 `<img src="${branding.logo_url}" alt="${fromName}" style="max-height: 50px; margin-bottom: 20px;">` : ''}
           ${htmlContent}
           ${!isEnterprise $1 `
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">

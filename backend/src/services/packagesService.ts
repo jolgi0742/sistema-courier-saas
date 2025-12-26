@@ -88,7 +88,7 @@ export class PackagesService {
      */
     static async getById(id: string, tenantId: string): Promise<Package | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM packages WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM packages WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (rows as Package[])[0] || null;
@@ -99,7 +99,7 @@ export class PackagesService {
      */
     static async getByTracking(tracking: string, tenantId: string): Promise<Package | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM packages WHERE tracking_number = ? AND tenant_id = ?',
+            'SELECT * FROM packages WHERE tracking_number = $1 AND tenant_id = $2',
             [tracking, tenantId]
         );
         return (rows as Package[])[0] || null;
@@ -109,31 +109,31 @@ export class PackagesService {
      * Listar paquetes con filtros
      */
     static async getAll(filters: PackageFilters): Promise<{ packages: Package[]; total: number }> {
-        let query = 'SELECT * FROM packages WHERE tenant_id = ?';
-        let countQuery = 'SELECT COUNT(*) as total FROM packages WHERE tenant_id = ?';
+        let query = 'SELECT * FROM packages WHERE tenant_id = $1';
+        let countQuery = 'SELECT COUNT(*) as total FROM packages WHERE tenant_id = $1';
         const params: any[] = [filters.tenant_id];
 
         if (filters.status) {
-            query += ' AND status = ?';
-            countQuery += ' AND status = ?';
+            query += ' AND status = $1';
+            countQuery += ' AND status = $1';
             params.push(filters.status);
         }
 
         if (filters.client_id) {
-            query += ' AND client_id = ?';
-            countQuery += ' AND client_id = ?';
+            query += ' AND client_id = $1';
+            countQuery += ' AND client_id = $1';
             params.push(filters.client_id);
         }
 
         if (filters.courier_id) {
-            query += ' AND courier_id = ?';
-            countQuery += ' AND courier_id = ?';
+            query += ' AND courier_id = $1';
+            countQuery += ' AND courier_id = $1';
             params.push(filters.courier_id);
         }
 
         if (filters.search) {
-            query += ' AND (tracking_number LIKE ? OR recipient_name LIKE ? OR sender_name LIKE ?)';
-            countQuery += ' AND (tracking_number LIKE ? OR recipient_name LIKE ? OR sender_name LIKE ?)';
+            query += ' AND (tracking_number LIKE $1 OR recipient_name LIKE $2 OR sender_name LIKE $3)';
+            countQuery += ' AND (tracking_number LIKE $1 OR recipient_name LIKE $2 OR sender_name LIKE $3)';
             const searchTerm = `%${filters.search}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
@@ -152,7 +152,7 @@ export class PackagesService {
 
         // Count total
         const { rows: countRows } = await pool.query(countQuery, params) as any;
-        const total = countRows[0]$5.total || 0;
+        const total = countRows[0].total || 0;
 
         // Add pagination
         query += ' ORDER BY created_at DESC';
@@ -183,8 +183,8 @@ export class PackagesService {
      */
     static async assignCourier(id: string, tenantId: string, courierId: string): Promise<Package | null> {
         await pool.query(
-            `UPDATE packages SET courier_id = ?, status = 'assigned', updated_at = CURRENT_TIMESTAMP 
-       WHERE id = ? AND tenant_id = ?`,
+            `UPDATE packages SET courier_id = $1, status = 'assigned', updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 AND tenant_id = $3`,
             [courierId, id, tenantId]
         );
         return this.getById(id, tenantId);
@@ -225,7 +225,7 @@ export class PackagesService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM packages WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM packages WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         ) as any;
         return result.affectedRows > 0;

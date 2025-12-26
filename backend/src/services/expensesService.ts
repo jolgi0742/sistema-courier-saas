@@ -24,16 +24,16 @@ export class ExpensesService {
         status?: string;
         category?: string;
     }): Promise<RecurringExpense[]> {
-        let query = 'SELECT * FROM recurring_expenses WHERE tenant_id = ?';
+        let query = 'SELECT * FROM recurring_expenses WHERE tenant_id = $1';
         const params: any[] = [tenantId];
 
         if (filters?.status) {
-            query += ' AND status = ?';
+            query += ' AND status = $1';
             params.push(filters.status);
         }
 
         if (filters?.category) {
-            query += ' AND category = ?';
+            query += ' AND category = $1';
             params.push(filters.category);
         }
 
@@ -48,7 +48,7 @@ export class ExpensesService {
      */
     static async getById(id: string, tenantId: string): Promise<RecurringExpense | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM recurring_expenses WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM recurring_expenses WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         const expenses = rows as RecurringExpense[];
@@ -152,7 +152,7 @@ export class ExpensesService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM recurring_expenses WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM recurring_expenses WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -215,7 +215,7 @@ export class ExpensesService {
      */
     static async getCategories(tenantId: string): Promise<string[]> {
         const { rows } = await pool.query(
-            'SELECT DISTINCT category FROM recurring_expenses WHERE tenant_id = ? AND category IS NOT NULL ORDER BY category',
+            'SELECT DISTINCT category FROM recurring_expenses WHERE tenant_id = $1 AND category IS NOT NULL ORDER BY category',
             [tenantId]
         );
         return (rows as any[]).map(row => row.category);

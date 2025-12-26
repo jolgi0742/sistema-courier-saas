@@ -23,7 +23,7 @@ export class RatesService {
      * Obtener todas las tarifas del tenant
      */
     static async getAll(tenantId: string, activeOnly: boolean = false): Promise<Rate[]> {
-        let query = 'SELECT * FROM rates WHERE tenant_id = ?';
+        let query = 'SELECT * FROM rates WHERE tenant_id = $1';
         const params: any[] = [tenantId];
 
         if (activeOnly) {
@@ -41,7 +41,7 @@ export class RatesService {
      */
     static async getById(id: string, tenantId: string): Promise<Rate | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM rates WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM rates WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         const rates = rows as Rate[];
@@ -140,7 +140,7 @@ export class RatesService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM rates WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM rates WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -188,7 +188,7 @@ export class RatesService {
      */
     static async getZones(tenantId: string): Promise<string[]> {
         const { rows } = await pool.query(
-            'SELECT DISTINCT zone FROM rates WHERE tenant_id = ? AND zone IS NOT NULL ORDER BY zone',
+            'SELECT DISTINCT zone FROM rates WHERE tenant_id = $1 AND zone IS NOT NULL ORDER BY zone',
             [tenantId]
         );
         return (rows as any[]).map(row => row.zone);

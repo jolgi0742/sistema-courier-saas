@@ -28,7 +28,7 @@ export class DomainService {
      */
     static async getByTenantId(tenantId: string): Promise<TenantDomain[]> {
         const { rows } = await pool.query(
-            'SELECT * FROM tenant_domains WHERE tenant_id = ? ORDER BY is_primary DESC',
+            'SELECT * FROM tenant_domains WHERE tenant_id = $1 ORDER BY is_primary DESC',
             [tenantId]
         );
         return rows as TenantDomain[];
@@ -39,7 +39,7 @@ export class DomainService {
      */
     static async getPrimaryDomain(tenantId: string): Promise<TenantDomain | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM tenant_domains WHERE tenant_id = ? AND is_primary = TRUE LIMIT 1',
+            'SELECT * FROM tenant_domains WHERE tenant_id = $1 AND is_primary = TRUE LIMIT 1',
             [tenantId]
         );
         return (rows as TenantDomain[])[0] || null;
@@ -50,7 +50,7 @@ export class DomainService {
      */
     static async getTenantByDomain(domain: string): Promise<string | null> {
         const { rows } = await pool.query(
-            'SELECT tenant_id FROM tenant_domains WHERE domain = ? AND ssl_status = "active"',
+            'SELECT tenant_id FROM tenant_domains WHERE domain = $1 AND ssl_status = "active"',
             [domain.toLowerCase()]
         );
         return (rows as any[])[0]?.tenant_id || null;
@@ -67,7 +67,7 @@ export class DomainService {
 
         // Verificar que no exista
         const { rows: existing } = await pool.query(
-            'SELECT id FROM tenant_domains WHERE domain = ?',
+            'SELECT id FROM tenant_domains WHERE domain = $1',
             [domain.toLowerCase()]
         ) as any;
 
@@ -77,7 +77,7 @@ export class DomainService {
 
         // Verificar que el tenant tiene plan Enterprise
         const { rows: tenantRows } = await pool.query(
-            'SELECT plan_id FROM tenants WHERE id = ?',
+            'SELECT plan_id FROM tenants WHERE id = $1',
             [tenantId]
         ) as any;
 
@@ -101,7 +101,7 @@ export class DomainService {
      */
     static async getById(id: string): Promise<TenantDomain | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM tenant_domains WHERE id = ?',
+            'SELECT * FROM tenant_domains WHERE id = $1',
             [id]
         );
         return (rows as TenantDomain[])[0] || null;
@@ -195,7 +195,7 @@ export class DomainService {
         expiresAt$5: Date
     ): Promise<void> {
         await pool.query(
-            `UPDATE tenant_domains SET ssl_status = ?, ssl_expires_at = ? WHERE id = ?`,
+            `UPDATE tenant_domains SET ssl_status = $1, ssl_expires_at = $2 WHERE id = $3`,
             [status, expiresAt || null, domainId]
         );
     }

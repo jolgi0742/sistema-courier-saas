@@ -46,17 +46,17 @@ export class MaintenanceService {
         const params: any[] = [tenantId];
 
         if (filters?.vehicleId) {
-            query += ' AND m.vehicle_id = ?';
+            query += ' AND m.vehicle_id = $1';
             params.push(filters.vehicleId);
         }
 
         if (filters?.status) {
-            query += ' AND m.status = ?';
+            query += ' AND m.status = $1';
             params.push(filters.status);
         }
 
         if (filters?.type) {
-            query += ' AND m.type = ?';
+            query += ' AND m.type = $1';
             params.push(filters.type);
         }
 
@@ -90,7 +90,7 @@ export class MaintenanceService {
      */
     static async getByVehicle(vehicleId: string, tenantId: string): Promise<Maintenance[]> {
         const { rows } = await pool.query(
-            'SELECT * FROM vehicle_maintenance WHERE vehicle_id = ? AND tenant_id = ? ORDER BY created_at DESC',
+            'SELECT * FROM vehicle_maintenance WHERE vehicle_id = $1 AND tenant_id = $2 ORDER BY created_at DESC',
             [vehicleId, tenantId]
         );
         return rows as Maintenance[];
@@ -220,7 +220,7 @@ export class MaintenanceService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM vehicle_maintenance WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM vehicle_maintenance WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;

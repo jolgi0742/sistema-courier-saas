@@ -29,21 +29,21 @@ export class SuppliersService {
         category?: string;
         search?: string;
     }): Promise<Supplier[]> {
-        let query = 'SELECT * FROM suppliers WHERE tenant_id = ?';
+        let query = 'SELECT * FROM suppliers WHERE tenant_id = $1';
         const params: any[] = [tenantId];
 
         if (filters?.status) {
-            query += ' AND status = ?';
+            query += ' AND status = $1';
             params.push(filters.status);
         }
 
         if (filters?.category) {
-            query += ' AND category = ?';
+            query += ' AND category = $1';
             params.push(filters.category);
         }
 
         if (filters?.search) {
-            query += ' AND (name LIKE ? OR contact_name LIKE ? OR email LIKE ?)';
+            query += ' AND (name LIKE $1 OR contact_name LIKE $2 OR email LIKE $3)';
             const searchTerm = `%${filters.search}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
@@ -76,7 +76,7 @@ export class SuppliersService {
             `INSERT INTO suppliers (
                 id, tenant_id, name, contact_name, phone, email, 
                 address, city, state, postal_code, category, notes, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
             [
                 id,
                 tenantId,
@@ -105,47 +105,47 @@ export class SuppliersService {
         const values: any[] = [];
 
         if (data.name !== undefined) {
-            fields.push('name = $1');
+            fields.push('name = ?');
             values.push(data.name);
         }
         if (data.contact_name !== undefined) {
-            fields.push('contact_name = $2');
+            fields.push('contact_name = ?');
             values.push(data.contact_name);
         }
         if (data.phone !== undefined) {
-            fields.push('phone = $3');
+            fields.push('phone = ?');
             values.push(data.phone);
         }
         if (data.email !== undefined) {
-            fields.push('email = $4');
+            fields.push('email = ?');
             values.push(data.email);
         }
         if (data.address !== undefined) {
-            fields.push('address = $5');
+            fields.push('address = ?');
             values.push(data.address);
         }
         if (data.city !== undefined) {
-            fields.push('city = $6');
+            fields.push('city = ?');
             values.push(data.city);
         }
         if (data.state !== undefined) {
-            fields.push('state = $7');
+            fields.push('state = ?');
             values.push(data.state);
         }
         if (data.postal_code !== undefined) {
-            fields.push('postal_code = $8');
+            fields.push('postal_code = ?');
             values.push(data.postal_code);
         }
         if (data.category !== undefined) {
-            fields.push('category = $9');
+            fields.push('category = ?');
             values.push(data.category);
         }
         if (data.notes !== undefined) {
-            fields.push('notes = $10');
+            fields.push('notes = ?');
             values.push(data.notes);
         }
         if (data.status !== undefined) {
-            fields.push('status = $11');
+            fields.push('status = ?');
             values.push(data.status);
         }
 
@@ -156,7 +156,7 @@ export class SuppliersService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE suppliers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?`,
+            `UPDATE suppliers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -188,7 +188,7 @@ export class SuppliersService {
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                 SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
-            FROM suppliers WHERE tenant_id = ?`,
+            FROM suppliers WHERE tenant_id = $1`,
             [tenantId]
         );
 
@@ -216,7 +216,7 @@ export class SuppliersService {
      */
     static async getCategories(tenantId: string): Promise<string[]> {
         const { rows } = await pool.query(
-            'SELECT DISTINCT category FROM suppliers WHERE tenant_id = ? AND category IS NOT NULL ORDER BY category',
+            'SELECT DISTINCT category FROM suppliers WHERE tenant_id = $1 AND category IS NOT NULL ORDER BY category',
             [tenantId]
         );
         return (rows as any[]).map(row => row.category);

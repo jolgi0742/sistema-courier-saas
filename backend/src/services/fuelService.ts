@@ -44,17 +44,17 @@ export class FuelService {
         const params: any[] = [tenantId];
 
         if (filters?.courierId) {
-            query += ' AND f.courier_id = ?';
+            query += ' AND f.courier_id = $1';
             params.push(filters.courierId);
         }
 
         if (filters?.startDate) {
-            query += ' AND f.created_at >= ?';
+            query += ' AND f.created_at >= $1';
             params.push(filters.startDate);
         }
 
         if (filters?.endDate) {
-            query += ' AND f.created_at <= ?';
+            query += ' AND f.created_at <= $1';
             params.push(filters.endDate);
         }
 
@@ -86,7 +86,7 @@ export class FuelService {
      */
     static async getByCourier(courierId: string, tenantId: string): Promise<FuelRecord[]> {
         const { rows } = await pool.query(
-            'SELECT * FROM fuel_records WHERE courier_id = ? AND tenant_id = ? ORDER BY created_at DESC',
+            'SELECT * FROM fuel_records WHERE courier_id = $1 AND tenant_id = $2 ORDER BY created_at DESC',
             [courierId, tenantId]
         );
         return rows as FuelRecord[];
@@ -193,7 +193,7 @@ export class FuelService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM fuel_records WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM fuel_records WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -220,12 +220,12 @@ export class FuelService {
         const params: any[] = [tenantId];
 
         if (period?.startDate) {
-            query += ' AND created_at >= ?';
+            query += ' AND created_at >= $1';
             params.push(period.startDate);
         }
 
         if (period?.endDate) {
-            query += ' AND created_at <= ?';
+            query += ' AND created_at <= $1';
             params.push(period.endDate);
         }
 

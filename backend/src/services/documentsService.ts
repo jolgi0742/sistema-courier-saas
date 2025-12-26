@@ -68,17 +68,17 @@ export class DocumentsService {
         const params: any[] = [tenantId];
 
         if (filters?.entityType) {
-            query += ' AND d.entity_type = ?';
+            query += ' AND d.entity_type = $1';
             params.push(filters.entityType);
         }
 
         if (filters?.entityId) {
-            query += ' AND d.entity_id = ?';
+            query += ' AND d.entity_id = $1';
             params.push(filters.entityId);
         }
 
         if (filters?.status) {
-            query += ' AND d.status = ?';
+            query += ' AND d.status = $1';
             params.push(filters.status);
         }
 
@@ -118,7 +118,7 @@ export class DocumentsService {
      */
     static async getByEntity(entityType: string, entityId: string, tenantId: string): Promise<Document[]> {
         const { rows } = await pool.query(
-            'SELECT * FROM documents WHERE entity_type = ? AND entity_id = ? AND tenant_id = ? ORDER BY expiration_date ASC',
+            'SELECT * FROM documents WHERE entity_type = $1 AND entity_id = $2 AND tenant_id = $3 ORDER BY expiration_date ASC',
             [entityType, entityId, tenantId]
         );
         return rows as Document[];
@@ -242,7 +242,7 @@ export class DocumentsService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM documents WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM documents WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;

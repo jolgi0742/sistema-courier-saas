@@ -45,17 +45,17 @@ export class IncidentsService {
         const params: any[] = [tenantId];
 
         if (filters?.status) {
-            query += ' AND i.status = ?';
+            query += ' AND i.status = $1';
             params.push(filters.status);
         }
 
         if (filters?.priority) {
-            query += ' AND i.priority = ?';
+            query += ' AND i.priority = $1';
             params.push(filters.priority);
         }
 
         if (filters?.type) {
-            query += ' AND i.type = ?';
+            query += ' AND i.type = $1';
             params.push(filters.type);
         }
 
@@ -89,7 +89,7 @@ export class IncidentsService {
      */
     static async getByPackage(packageId: string, tenantId: string): Promise<Incident[]> {
         const { rows } = await pool.query(
-            'SELECT * FROM incidents WHERE package_id = ? AND tenant_id = ? ORDER BY created_at DESC',
+            'SELECT * FROM incidents WHERE package_id = $1 AND tenant_id = $2 ORDER BY created_at DESC',
             [packageId, tenantId]
         );
         return rows as Incident[];
@@ -191,7 +191,7 @@ export class IncidentsService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM incidents WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM incidents WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -222,7 +222,7 @@ export class IncidentsService {
 
         // Por tipo
         const { rows: typeRows } = await pool.query(
-            'SELECT type, COUNT(*) as count FROM incidents WHERE tenant_id = ? GROUP BY type',
+            'SELECT type, COUNT(*) as count FROM incidents WHERE tenant_id = $1 GROUP BY type',
             [tenantId]
         );
 
@@ -233,7 +233,7 @@ export class IncidentsService {
 
         // Por prioridad
         const { rows: priorityRows } = await pool.query(
-            'SELECT priority, COUNT(*) as count FROM incidents WHERE tenant_id = ? GROUP BY priority',
+            'SELECT priority, COUNT(*) as count FROM incidents WHERE tenant_id = $1 GROUP BY priority',
             [tenantId]
         );
 

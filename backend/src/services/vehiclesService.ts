@@ -37,7 +37,7 @@ export class VehiclesService {
         const params: any[] = [tenantId];
 
         if (filters?.status) {
-            query += ' AND v.status = ?';
+            query += ' AND v.status = $1';
             params.push(filters.status);
         }
 
@@ -145,7 +145,7 @@ export class VehiclesService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM vehicles WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM vehicles WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;

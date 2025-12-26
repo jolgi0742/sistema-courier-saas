@@ -58,7 +58,7 @@ export class CouriersService {
      */
     static async getById(id: string, tenantId: string): Promise<Courier | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM couriers WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM couriers WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (rows as Courier[])[0] || null;
@@ -72,21 +72,21 @@ export class CouriersService {
         zone?: string;
         search?: string;
     }): Promise<Courier[]> {
-        let query = 'SELECT * FROM couriers WHERE tenant_id = ?';
+        let query = 'SELECT * FROM couriers WHERE tenant_id = $1';
         const params: any[] = [tenantId];
 
         if (filters?.status) {
-            query += ' AND status = ?';
+            query += ' AND status = $1';
             params.push(filters.status);
         }
 
         if (filters?.zone) {
-            query += ' AND zone = ?';
+            query += ' AND zone = $1';
             params.push(filters.zone);
         }
 
         if (filters?.search) {
-            query += ' AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)';
+            query += ' AND (name LIKE $1 OR email LIKE $2 OR phone LIKE $3)';
             const searchTerm = `%${filters.search}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
@@ -101,7 +101,7 @@ export class CouriersService {
      * Obtener couriers disponibles para asignación
      */
     static async getAvailable(tenantId: string, zone$1: string): Promise<Courier[]> {
-        let query = `SELECT * FROM couriers WHERE tenant_id = ? AND status = 'active'`;
+        let query = `SELECT * FROM couriers WHERE tenant_id = $1 AND status = 'active'`;
         const params: any[] = [tenantId];
 
         if (zone) {
@@ -127,7 +127,7 @@ export class CouriersService {
 
         for (const field of allowedFields) {
             if (data[field as keyof Courier] !== undefined) {
-                updates.push(`${field} = ?`);
+                updates.push(`${field} = $1`);
                 values.push(data[field as keyof Courier]);
             }
         }
@@ -150,7 +150,7 @@ export class CouriersService {
      */
     static async updateStatus(id: string, tenantId: string, status: string): Promise<Courier | null> {
         await pool.query(
-            'UPDATE couriers SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
+            'UPDATE couriers SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND tenant_id = $3',
             [status, id, tenantId]
         );
         return this.getById(id, tenantId);
@@ -230,7 +230,7 @@ export class CouriersService {
         }
 
         const { rows: result } = await pool.query(
-            'DELETE FROM couriers WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM couriers WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         ) as any;
 
