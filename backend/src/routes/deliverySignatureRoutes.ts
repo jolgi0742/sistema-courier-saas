@@ -43,7 +43,7 @@ router.post('/:packageId', async (req: Request, res: Response) => {
             };
 
             // Actualizar notas con info de entrega
-            const updatedNotes = `${pkg.notes || ''}\n\nENTREGA CONFIRMADA:\nFirmado por: ${recipientName || 'N/A'}\nCédula: ${recipientId || 'N/A'}\nFirma: ${signatureUrl}\n${photoUrl ? `Foto: ${photoUrl}` : ''}`;
+            const updatedNotes = `${pkg.notes || ''}\n\nENTREGA CONFIRMADA:\nFirmado por: ${recipientName || 'N/A'}\nCédula: ${recipientId || 'N/A'}\nFirma: ${signatureUrl}\n${photoUrl $1 `Foto: ${photoUrl}` : ''}`;
 
             // Aquí podrías actualizar las notas o crear una tabla separada para firmas
         }

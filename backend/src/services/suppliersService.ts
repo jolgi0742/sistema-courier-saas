@@ -59,11 +59,11 @@ export class SuppliersService {
      */
     static async getById(id: string, tenantId: string): Promise<Supplier | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM suppliers WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM suppliers WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         const suppliers = rows as Supplier[];
-        return suppliers.length > 0 ? suppliers[0] : null;
+        return suppliers.length > 0 $3 suppliers[0] : null;
     }
 
     /**
@@ -105,47 +105,47 @@ export class SuppliersService {
         const values: any[] = [];
 
         if (data.name !== undefined) {
-            fields.push('name = ?');
+            fields.push('name = $1');
             values.push(data.name);
         }
         if (data.contact_name !== undefined) {
-            fields.push('contact_name = ?');
+            fields.push('contact_name = $2');
             values.push(data.contact_name);
         }
         if (data.phone !== undefined) {
-            fields.push('phone = ?');
+            fields.push('phone = $3');
             values.push(data.phone);
         }
         if (data.email !== undefined) {
-            fields.push('email = ?');
+            fields.push('email = $4');
             values.push(data.email);
         }
         if (data.address !== undefined) {
-            fields.push('address = ?');
+            fields.push('address = $5');
             values.push(data.address);
         }
         if (data.city !== undefined) {
-            fields.push('city = ?');
+            fields.push('city = $6');
             values.push(data.city);
         }
         if (data.state !== undefined) {
-            fields.push('state = ?');
+            fields.push('state = $7');
             values.push(data.state);
         }
         if (data.postal_code !== undefined) {
-            fields.push('postal_code = ?');
+            fields.push('postal_code = $8');
             values.push(data.postal_code);
         }
         if (data.category !== undefined) {
-            fields.push('category = ?');
+            fields.push('category = $9');
             values.push(data.category);
         }
         if (data.notes !== undefined) {
-            fields.push('notes = ?');
+            fields.push('notes = $10');
             values.push(data.notes);
         }
         if (data.status !== undefined) {
-            fields.push('status = ?');
+            fields.push('status = $11');
             values.push(data.status);
         }
 
@@ -156,7 +156,7 @@ export class SuppliersService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE suppliers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
+            `UPDATE suppliers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?`,
             values
         );
 
@@ -168,7 +168,7 @@ export class SuppliersService {
      */
     static async delete(id: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'DELETE FROM suppliers WHERE id = ? AND tenant_id = ?',
+            'DELETE FROM suppliers WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         return (result as any).affectedRows > 0;
@@ -197,7 +197,7 @@ export class SuppliersService {
         const { rows: categoryRows } = await pool.query(
             `SELECT category, COUNT(*) as count 
              FROM suppliers 
-             WHERE tenant_id = ? AND category IS NOT NULL
+             WHERE tenant_id = $1 AND category IS NOT NULL
              GROUP BY category
              ORDER BY count DESC`,
             [tenantId]

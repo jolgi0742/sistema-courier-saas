@@ -45,7 +45,7 @@ export class ClientsService {
             `INSERT INTO clients (
         id, tenant_id, name, email, phone, company_name, 
         address, city, country, tax_id, credit_limit, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active')`,
             [
                 id, input.tenant_id, input.name, input.email, input.phone,
                 input.company_name || null, input.address || null,
@@ -107,11 +107,11 @@ export class ClientsService {
 
         // Count
         const { rows: countRows } = await pool.query(countQuery, params) as any;
-        const total = countRows[0]?.total || 0;
+        const total = countRows[0]$1.total || 0;
 
         // Results
         query += ' ORDER BY name ASC';
-        if (filters?.limit) {
+        if (filters$2.limit) {
             query += ` LIMIT ${filters.limit}`;
             if (filters.offset) {
                 query += ` OFFSET ${filters.offset}`;
@@ -135,18 +135,18 @@ export class ClientsService {
 
         for (const field of allowedFields) {
             if (data[field as keyof Client] !== undefined) {
-                updates.push(`${field} = ?`);
+                updates.push(`${field} = $1`);
                 values.push(data[field as keyof Client]);
             }
         }
 
         if (updates.length === 0) return this.getById(id, tenantId);
 
-        updates.push('updated_at = NOW()');
+        updates.push('updated_at = CURRENT_TIMESTAMP');
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE clients SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE clients SET ${updates.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -158,8 +158,8 @@ export class ClientsService {
      */
     static async updateCreditBalance(id: string, tenantId: string, amount: number): Promise<void> {
         await pool.query(
-            `UPDATE clients SET credit_balance = credit_balance + ?, updated_at = NOW() 
-       WHERE id = ? AND tenant_id = ?`,
+            `UPDATE clients SET credit_balance = credit_balance + $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 AND tenant_id = $3`,
             [amount, id, tenantId]
         );
     }
@@ -169,8 +169,8 @@ export class ClientsService {
      */
     static async incrementPackages(id: string, tenantId: string): Promise<void> {
         await pool.query(
-            `UPDATE clients SET total_packages = total_packages + 1, updated_at = NOW() 
-       WHERE id = ? AND tenant_id = ?`,
+            `UPDATE clients SET total_packages = total_packages + 1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $1 AND tenant_id = $2`,
             [id, tenantId]
         );
     }
@@ -180,8 +180,8 @@ export class ClientsService {
      */
     static async getPackages(id: string, tenantId: string, limit = 50): Promise<any[]> {
         const { rows } = await pool.query(
-            `SELECT * FROM packages WHERE client_id = ? AND tenant_id = ? 
-       ORDER BY created_at DESC LIMIT ?`,
+            `SELECT * FROM packages WHERE client_id = $1 AND tenant_id = $2 
+       ORDER BY created_at DESC LIMIT $3`,
             [id, tenantId, limit]
         );
         return rows as any[];
@@ -197,13 +197,13 @@ export class ClientsService {
         SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
         SUM(total_packages) as total_packages,
         SUM(credit_balance) as total_credit
-       FROM clients WHERE tenant_id = ?`,
+       FROM clients WHERE tenant_id = $1`,
             [tenantId]
         ) as any;
 
         const { rows: topRows } = await pool.query(
             `SELECT id, name, company_name, total_packages FROM clients 
-       WHERE tenant_id = ? ORDER BY total_packages DESC LIMIT 5`,
+       WHERE tenant_id = $1 ORDER BY total_packages DESC LIMIT 5`,
             [tenantId]
         ) as any;
 

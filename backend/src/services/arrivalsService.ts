@@ -38,7 +38,7 @@ export class ArrivalsService {
             FROM package_arrivals pa
             LEFT JOIN packages p ON pa.package_id = p.id
             LEFT JOIN users u ON pa.received_by = u.id
-            WHERE pa.tenant_id = ?
+            WHERE pa.tenant_id = $1
         `;
         const params: any[] = [tenantId];
 
@@ -72,7 +72,7 @@ export class ArrivalsService {
             FROM package_arrivals pa
             LEFT JOIN packages p ON pa.package_id = p.id
             LEFT JOIN users u ON pa.received_by = u.id
-            WHERE pa.id = ? AND pa.tenant_id = ?`,
+            WHERE pa.id = $1 AND pa.tenant_id = $2`,
             [id, tenantId]
         );
         const arrivals = rows as PackageArrivalWithDetails[];
@@ -120,7 +120,7 @@ export class ArrivalsService {
         await pool.query(
             `INSERT INTO package_arrivals (
                 id, tenant_id, package_id, received_by, condition_status, notes
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6)`,
             [
                 id,
                 tenantId,
@@ -160,7 +160,7 @@ export class ArrivalsService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE package_arrivals SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE package_arrivals SET ${fields.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -193,7 +193,7 @@ export class ArrivalsService {
                 SUM(CASE WHEN condition_status = 'good' THEN 1 ELSE 0 END) as good,
                 SUM(CASE WHEN condition_status = 'damaged' THEN 1 ELSE 0 END) as damaged,
                 SUM(CASE WHEN condition_status = 'incomplete' THEN 1 ELSE 0 END) as incomplete
-            FROM package_arrivals WHERE tenant_id = ?
+            FROM package_arrivals WHERE tenant_id = $1
         `;
         const params: any[] = [tenantId];
 

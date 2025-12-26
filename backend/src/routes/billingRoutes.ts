@@ -66,7 +66,7 @@ router.post('/create-checkout-session', tenantMiddleware, async (req: Request, r
         const priceField = billing_cycle === 'annual' ? 'stripe_price_id_annual' : 'stripe_price_id_monthly';
 
         const { rows: planRows } = await pool.query(
-            `SELECT ${priceField} as stripe_price_id, name FROM plans WHERE id = ?`,
+            `SELECT ${priceField} as stripe_price_id, name FROM plans WHERE id = $1`,
             [plan_id]
         ) as any;
 
@@ -82,8 +82,8 @@ router.post('/create-checkout-session', tenantMiddleware, async (req: Request, r
                 price: planRows[0].stripe_price_id,
                 quantity: 1
             }],
-            success_url: `${process.env.FRONTEND_URL}/account/billing?success=true`,
-            cancel_url: `${process.env.FRONTEND_URL}/account/billing?canceled=true`,
+            success_url: `${process.env.FRONTEND_URL}/account/billing$1success=true`,
+            cancel_url: `${process.env.FRONTEND_URL}/account/billing$1canceled=true`,
             metadata: {
                 tenant_id: tenantId,
                 plan_id: plan_id
@@ -134,7 +134,7 @@ router.get('/subscription', tenantMiddleware, async (req: Request, res: Response
             `SELECT s.*, p.name as plan_name, p.limits, p.features
        FROM subscriptions s
        LEFT JOIN plans p ON s.plan_id = p.id
-       WHERE s.tenant_id = ?`,
+       WHERE s.tenant_id = $1`,
             [tenantId]
         ) as any;
 

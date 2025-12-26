@@ -40,7 +40,7 @@ export class IncidentsService {
             FROM incidents i
             LEFT JOIN packages p ON i.package_id = p.id
             LEFT JOIN clients c ON p.client_id = c.id
-            WHERE i.tenant_id = ?
+            WHERE i.tenant_id = $1
         `;
         const params: any[] = [tenantId];
 
@@ -77,7 +77,7 @@ export class IncidentsService {
             FROM incidents i
             LEFT JOIN packages p ON i.package_id = p.id
             LEFT JOIN clients c ON p.client_id = c.id
-            WHERE i.id = ? AND i.tenant_id = ?`,
+            WHERE i.id = $1 AND i.tenant_id = $2`,
             [id, tenantId]
         );
         const incidents = rows as IncidentWithPackage[];
@@ -105,7 +105,7 @@ export class IncidentsService {
             `INSERT INTO incidents (
                 id, tenant_id, package_id, type, status, priority,
                 description, resolution, assigned_to, reported_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
                 id,
                 tenantId,
@@ -162,7 +162,7 @@ export class IncidentsService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE incidents SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
+            `UPDATE incidents SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -176,10 +176,10 @@ export class IncidentsService {
         await pool.query(
             `UPDATE incidents 
              SET status = 'resolved', 
-                 resolution = ?, 
-                 resolved_at = NOW(),
-                 updated_at = NOW()
-             WHERE id = ? AND tenant_id = ?`,
+                 resolution = $1, 
+                 resolved_at = CURRENT_TIMESTAMP,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND tenant_id = $3`,
             [resolution, id, tenantId]
         );
 
@@ -214,7 +214,7 @@ export class IncidentsService {
                 SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open,
                 SUM(CASE WHEN status = 'investigating' THEN 1 ELSE 0 END) as investigating,
                 SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved
-            FROM incidents WHERE tenant_id = ?`,
+            FROM incidents WHERE tenant_id = $1`,
             [tenantId]
         );
 

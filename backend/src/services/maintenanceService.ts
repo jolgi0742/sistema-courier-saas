@@ -41,7 +41,7 @@ export class MaintenanceService {
                 v.model as vehicle_model
             FROM vehicle_maintenance m
             LEFT JOIN vehicles v ON m.vehicle_id = v.id
-            WHERE m.tenant_id = ?
+            WHERE m.tenant_id = $1
         `;
         const params: any[] = [tenantId];
 
@@ -78,7 +78,7 @@ export class MaintenanceService {
                 v.model as vehicle_model
             FROM vehicle_maintenance m
             LEFT JOIN vehicles v ON m.vehicle_id = v.id
-            WHERE m.id = ? AND m.tenant_id = ?`,
+            WHERE m.id = $1 AND m.tenant_id = $2`,
             [id, tenantId]
         );
         const records = rows as MaintenanceWithVehicle[];
@@ -108,10 +108,10 @@ export class MaintenanceService {
                 v.model as vehicle_model
             FROM vehicle_maintenance m
             LEFT JOIN vehicles v ON m.vehicle_id = v.id
-            WHERE m.tenant_id = ? 
+            WHERE m.tenant_id = $1 
             AND m.status = 'scheduled'
             AND m.next_service_date IS NOT NULL
-            AND m.next_service_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+            AND m.next_service_date <= DATE_ADD(CURDATE(), INTERVAL $2 DAY)
             ORDER BY m.next_service_date ASC`,
             [tenantId, days]
         );
@@ -128,7 +128,7 @@ export class MaintenanceService {
             `INSERT INTO vehicle_maintenance (
                 id, tenant_id, vehicle_id, type, description, cost, provider,
                 odometer_reading, next_service_date, next_service_odometer, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
             [
                 id,
                 tenantId,
@@ -194,7 +194,7 @@ export class MaintenanceService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE vehicle_maintenance SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE vehicle_maintenance SET ${fields.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -207,8 +207,8 @@ export class MaintenanceService {
     static async complete(id: string, tenantId: string): Promise<Maintenance | null> {
         await pool.query(
             `UPDATE vehicle_maintenance 
-             SET status = 'completed', completed_at = NOW()
-             WHERE id = ? AND tenant_id = ?`,
+             SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+             WHERE id = $1 AND tenant_id = $2`,
             [id, tenantId]
         );
 
@@ -243,7 +243,7 @@ export class MaintenanceService {
                 SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as inProgress,
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN status = 'scheduled' AND next_service_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as upcoming
-            FROM vehicle_maintenance WHERE tenant_id = ?`,
+            FROM vehicle_maintenance WHERE tenant_id = $1`,
             [tenantId]
         );
 

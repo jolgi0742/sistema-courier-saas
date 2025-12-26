@@ -46,10 +46,10 @@ export class ManifestsService {
     /**
      * Obtener todos los manifiestos
      */
-    static async getAll(tenantId: string, filters?: {
-        status?: string;
-        courierId?: string;
-        date?: string;
+    static async getAll(tenantId: string, filters$1: {
+        status$2: string;
+        courierId$3: string;
+        date$4: string;
     }): Promise<ManifestWithDetails[]> {
         let query = `
             SELECT 
@@ -61,18 +61,18 @@ export class ManifestsService {
         `;
         const params: any[] = [tenantId];
 
-        if (filters?.status) {
-            query += ' AND cm.status = ?';
+        if (filters$1.status) {
+            query += ' AND cm.status = $2';
             params.push(filters.status);
         }
 
-        if (filters?.courierId) {
-            query += ' AND cm.courier_id = ?';
+        if (filters$3.courierId) {
+            query += ' AND cm.courier_id = $4';
             params.push(filters.courierId);
         }
 
-        if (filters?.date) {
-            query += ' AND cm.date = ?';
+        if (filters$5.date) {
+            query += ' AND cm.date = $6';
             params.push(filters.date);
         }
 
@@ -124,7 +124,7 @@ export class ManifestsService {
                 p.receiver_address
             FROM manifest_packages mp
             LEFT JOIN packages p ON mp.package_id = p.id
-            WHERE mp.manifest_id = ?
+            WHERE mp.manifest_id = $1
             ORDER BY mp.sequence_number ASC`,
             [manifestId]
         );
@@ -146,7 +146,7 @@ export class ManifestsService {
         await pool.query(
             `INSERT INTO cargo_manifests (
                 id, tenant_id, manifest_number, courier_id, route, date, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
                 id,
                 tenantId,
@@ -190,7 +190,7 @@ export class ManifestsService {
             values.push(data.status);
 
             if (data.status === 'completed') {
-                fields.push('completed_at = NOW()');
+                fields.push('completed_at = CURRENT_TIMESTAMP');
             }
         }
 
@@ -201,7 +201,7 @@ export class ManifestsService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE cargo_manifests SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE cargo_manifests SET ${fields.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -230,7 +230,7 @@ export class ManifestsService {
             const id = uuidv4();
             await pool.query(
                 `INSERT INTO manifest_packages (id, manifest_id, package_id, sequence_number)
-                 VALUES (?, ?, ?, ?)`,
+                 VALUES ($1, $2, $3, $4)`,
                 [id, manifestId, packageId, sequenceNumber++]
             );
         }
@@ -269,9 +269,9 @@ export class ManifestsService {
         await pool.query(
             `UPDATE cargo_manifests 
              SET total_packages = (
-                 SELECT COUNT(*) FROM manifest_packages WHERE manifest_id = ?
+                 SELECT COUNT(*) FROM manifest_packages WHERE manifest_id = $1
              )
-             WHERE id = ?`,
+             WHERE id = $2`,
             [manifestId, manifestId]
         );
     }
@@ -302,7 +302,7 @@ export class ManifestsService {
                 SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
-            FROM cargo_manifests WHERE tenant_id = ?`,
+            FROM cargo_manifests WHERE tenant_id = $1`,
             [tenantId]
         );
 

@@ -39,7 +39,7 @@ export class FuelService {
                 c.name as courier_name
             FROM fuel_records f
             LEFT JOIN couriers c ON f.courier_id = c.id
-            WHERE f.tenant_id = ?
+            WHERE f.tenant_id = $1
         `;
         const params: any[] = [tenantId];
 
@@ -74,7 +74,7 @@ export class FuelService {
                 c.name as courier_name
             FROM fuel_records f
             LEFT JOIN couriers c ON f.courier_id = c.id
-            WHERE f.id = ? AND f.tenant_id = ?`,
+            WHERE f.id = $1 AND f.tenant_id = $2`,
             [id, tenantId]
         );
         const records = rows as FuelRecordWithCourier[];
@@ -115,7 +115,7 @@ export class FuelService {
         const { rows } = await pool.query(
             `SELECT odometer_reading 
              FROM fuel_records 
-             WHERE courier_id = ? AND tenant_id = ? AND odometer_reading IS NOT NULL
+             WHERE courier_id = $1 AND tenant_id = $2 AND odometer_reading IS NOT NULL
              ORDER BY created_at DESC 
              LIMIT 1`,
             [courierId, tenantId]
@@ -166,7 +166,7 @@ export class FuelService {
                 id, tenant_id, courier_id, vehicle_id, liters, cost, price_per_liter,
                 odometer_reading, previous_odometer, distance_traveled, efficiency,
                 station, receipt_url, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
             [
                 id,
                 tenantId,
@@ -215,7 +215,7 @@ export class FuelService {
                 COALESCE(AVG(efficiency), 0) as averageEfficiency,
                 COUNT(*) as recordCount
             FROM fuel_records 
-            WHERE tenant_id = ?
+            WHERE tenant_id = $1
         `;
         const params: any[] = [tenantId];
 

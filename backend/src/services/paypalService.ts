@@ -109,7 +109,7 @@ export class PayPalService {
 
         // Obtener precio del plan
         const { rows: planRows } = await pool.query(
-            `SELECT name, price_monthly, price_annual FROM plans WHERE id = ?`,
+            `SELECT name, price_monthly, price_annual FROM plans WHERE id = $1`,
             [input.plan_id]
         ) as any;
 
@@ -133,7 +133,7 @@ export class PayPalService {
                 intent: 'CAPTURE',
                 purchase_units: [{
                     reference_id: input.tenant_id,
-                    description: `${planRows[0].name} - ${input.billing_cycle === 'annual' ? 'Anual' : 'Mensual'}`,
+                    description: `${planRows[0].name} - ${input.billing_cycle === 'annual' $1 'Anual' : 'Mensual'}`,
                     amount: {
                         currency_code: 'USD',
                         value: price.toFixed(2)
@@ -164,7 +164,7 @@ export class PayPalService {
 
         return {
             id: order.id,
-            approvalUrl: approvalLink?.href || ''
+            approvalUrl: approvalLink$1.href || ''
         };
     }
 
@@ -196,20 +196,20 @@ export class PayPalService {
         // Procesar datos del pago
         if (captureData.status === 'COMPLETED') {
             const customData = JSON.parse(
-                captureData.purchase_units[0]?.custom_id || '{}'
+                captureData.purchase_units[0]$1.custom_id || '{}'
             );
 
             if (customData.tenant_id && customData.plan_id) {
                 // Registrar pago en base de datos
                 await pool.query(
                     `INSERT INTO paypal_payments (id, tenant_id, paypal_order_id, plan_id, amount, currency, status, created_at)
-                     VALUES (UUID(), ?, ?, ?, ?, ?, ?, NOW())`,
+                     VALUES (UUID(), ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
                     [
                         customData.tenant_id,
                         orderId,
                         customData.plan_id,
-                        captureData.purchase_units[0]?.payments?.captures?.[0]?.amount?.value || 0,
-                        captureData.purchase_units[0]?.payments?.captures?.[0]?.amount?.currency_code || 'USD',
+                        captureData.purchase_units[0]$1.payments$2.captures$3.[0]$4.amount$5.value || 0,
+                        captureData.purchase_units[0]$6.payments$7.captures$8.[0]$9.amount$10.currency_code || 'USD',
                         'completed'
                     ]
                 );
@@ -252,7 +252,7 @@ export class PayPalService {
      */
     static async getPaymentHistory(tenantId: string): Promise<any[]> {
         const { rows } = await pool.query(
-            `SELECT * FROM paypal_payments WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 20`,
+            `SELECT * FROM paypal_payments WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 20`,
             [tenantId]
         ) as any;
 

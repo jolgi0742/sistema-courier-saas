@@ -42,11 +42,11 @@ export class ShippersService {
      */
     static async getById(id: string, tenantId: string): Promise<FrequentShipper | null> {
         const { rows } = await pool.query(
-            'SELECT * FROM frequent_shippers WHERE id = ? AND tenant_id = ?',
+            'SELECT * FROM frequent_shippers WHERE id = $1 AND tenant_id = $2',
             [id, tenantId]
         );
         const shippers = rows as FrequentShipper[];
-        return shippers.length > 0 ? shippers[0] : null;
+        return shippers.length > 0 $3 shippers[0] : null;
     }
 
     /**
@@ -56,8 +56,8 @@ export class ShippersService {
         const searchTerm = `%${query}%`;
         const { rows } = await pool.query(
             `SELECT * FROM frequent_shippers 
-             WHERE tenant_id = ? 
-             AND (name LIKE ? OR phone LIKE ? OR email LIKE ?)
+             WHERE tenant_id = $1 
+             AND (name LIKE $2 OR phone LIKE $3 OR email LIKE $4)
              ORDER BY total_shipments DESC
              LIMIT 10`,
             [tenantId, searchTerm, searchTerm, searchTerm]
@@ -74,7 +74,7 @@ export class ShippersService {
         await pool.query(
             `INSERT INTO frequent_shippers (
                 id, tenant_id, name, phone, email, address, city, state, postal_code
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
             [
                 id,
                 tenantId,
@@ -134,7 +134,7 @@ export class ShippersService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE frequent_shippers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
+            `UPDATE frequent_shippers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2`,
             values
         );
 

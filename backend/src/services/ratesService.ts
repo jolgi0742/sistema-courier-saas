@@ -58,7 +58,7 @@ export class RatesService {
             `INSERT INTO rates (
                 id, tenant_id, name, description, zone, min_weight, max_weight,
                 base_price, price_per_kg, service_type, active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
             [
                 id,
                 tenantId,
@@ -128,7 +128,7 @@ export class RatesService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE rates SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
+            `UPDATE rates SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -158,12 +158,12 @@ export class RatesService {
         // Buscar tarifa que coincida con zona, peso y tipo de servicio
         const { rows } = await pool.query(
             `SELECT * FROM rates 
-             WHERE tenant_id = ? 
-             AND zone = ? 
-             AND service_type = ?
+             WHERE tenant_id = $1 
+             AND zone = $2 
+             AND service_type = $3
              AND active = true
-             AND min_weight <= ?
-             AND (max_weight IS NULL OR max_weight >= ?)
+             AND min_weight <= $4
+             AND (max_weight IS NULL OR max_weight >= $5)
              ORDER BY base_price ASC
              LIMIT 1`,
             [tenantId, zone, serviceType, weight, weight]

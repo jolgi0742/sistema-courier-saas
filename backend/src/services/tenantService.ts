@@ -50,7 +50,7 @@ export class TenantService {
         const { rows } = await pool.query(
             `SELECT t.* FROM tenants t
        INNER JOIN tenant_domains td ON t.id = td.tenant_id
-       WHERE td.domain = ? AND td.ssl_status = 'active'`,
+       WHERE td.domain = $1 AND td.ssl_status = 'active'`,
             [domain.toLowerCase()]
         );
         return (rows as Tenant[])[0] || null;
@@ -78,21 +78,21 @@ export class TenantService {
 
         await pool.query(
             `INSERT INTO tenants (id, name, subdomain, status, plan_id, trial_ends_at)
-       VALUES (?, ?, ?, 'trial', 'trial', ?)`,
+       VALUES ($1, $2, $3, 'trial', 'trial', $4)`,
             [id, input.name, input.subdomain.toLowerCase(), trialEndsAt]
         );
 
         // Crear branding por defecto
         await pool.query(
             `INSERT INTO tenant_branding (tenant_id, company_name, primary_color, secondary_color, accent_color)
-       VALUES (?, ?, '#3B82F6', '#1E40AF', '#10B981')`,
+       VALUES ($1, $2, '#3B82F6', '#1E40AF', '#10B981')`,
             [id, input.name]
         );
 
         // Crear dominio de subdominio
         await pool.query(
             `INSERT INTO tenant_domains (id, tenant_id, domain_type, domain, is_primary, ssl_status)
-       VALUES (?, ?, 'subdomain', ?, TRUE, 'active')`,
+       VALUES ($1, $2, 'subdomain', $3, TRUE, 'active')`,
             [uuidv4(), id, `${input.subdomain.toLowerCase()}.sistemacourier.com`]
         );
 
@@ -107,17 +107,17 @@ export class TenantService {
         const values: any[] = [];
 
         if (data.name) {
-            updates.push('name = ?');
+            updates.push('name = $1');
             values.push(data.name);
         }
 
         if (data.status) {
-            updates.push('status = ?');
+            updates.push('status = $2');
             values.push(data.status);
         }
 
         if (data.plan_id) {
-            updates.push('plan_id = ?');
+            updates.push('plan_id = $3');
             values.push(data.plan_id);
         }
 
@@ -137,7 +137,7 @@ export class TenantService {
      */
     static async activate(id: string, planId: string): Promise<Tenant> {
         await pool.query(
-            `UPDATE tenants SET status = 'active', plan_id = ?, trial_ends_at = NULL WHERE id = ?`,
+            `UPDATE tenants SET status = 'active', plan_id = $1, trial_ends_at = NULL WHERE id = $2`,
             [planId, id]
         );
         return (await this.getById(id))!;
@@ -148,7 +148,7 @@ export class TenantService {
      */
     static async suspend(id: string, reason?: string): Promise<Tenant> {
         await pool.query(
-            `UPDATE tenants SET status = 'suspended' WHERE id = ?`,
+            `UPDATE tenants SET status = 'suspended' WHERE id = $1`,
             [id]
         );
         // TODO: Log de suspensión con razón
@@ -160,7 +160,7 @@ export class TenantService {
      */
     static async cancel(id: string): Promise<Tenant> {
         await pool.query(
-            `UPDATE tenants SET status = 'cancelled' WHERE id = ?`,
+            `UPDATE tenants SET status = 'cancelled' WHERE id = $1`,
             [id]
         );
         return (await this.getById(id))!;
@@ -204,9 +204,9 @@ export class TenantService {
 
         // Add pagination
         query += ' ORDER BY created_at DESC';
-        if (filters?.limit) {
+        if (filters$1.limit) {
             query += ` LIMIT ${filters.limit}`;
-            if (filters?.offset) {
+            if (filters$1.offset) {
                 query += ` OFFSET ${filters.offset}`;
             }
         }

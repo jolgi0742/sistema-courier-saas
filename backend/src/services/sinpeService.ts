@@ -41,10 +41,10 @@ export class SinpeService {
      */
     static async getSinpeInfo(tenantId: string): Promise<any> {
         // Verificar si el tenant tiene configuración personalizada de SINPE
-        const { rows } = await pool.query<any[]>(
+        const { rows } = await pool.query(
             `SELECT sinpe_phone, sinpe_bank, sinpe_holder_name 
              FROM tenant_settings 
-             WHERE tenant_id = ?`,
+             WHERE tenant_id = $1`,
             [tenantId]
         );
 
@@ -69,7 +69,7 @@ export class SinpeService {
         await pool.query(
             `INSERT INTO sinpe_payments 
              (id, tenant_id, amount, currency, customer_name, customer_phone, reference_number, receipt_url, status, created_at)
-             VALUES (?, ?, ?, 'CRC', ?, ?, ?, ?, 'pending', NOW())`,
+             VALUES ($1, $2, $3, 'CRC', $4, $5, $6, $7, 'pending', CURRENT_TIMESTAMP)`,
             [
                 id,
                 input.tenant_id,
@@ -84,8 +84,8 @@ export class SinpeService {
         // Notificar al admin que hay un pago pendiente
         await this.notifyAdminNewPayment(input.tenant_id, id, input.amount, input.customer_name);
 
-        const { rows } = await pool.query<any[]>(
-            'SELECT * FROM sinpe_payments WHERE id = ?',
+        const { rows } = await pool.query(
+            'SELECT * FROM sinpe_payments WHERE id = $1',
             [id]
         );
 
@@ -96,9 +96,9 @@ export class SinpeService {
      * Obtener pagos pendientes de verificación
      */
     static async getPendingPayments(tenantId: string): Promise<SinpePayment[]> {
-        const { rows } = await pool.query<any[]>(
+        const { rows } = await pool.query(
             `SELECT * FROM sinpe_payments 
-             WHERE tenant_id = ? AND status = 'pending'
+             WHERE tenant_id = $1 AND status = 'pending'
              ORDER BY created_at DESC`,
             [tenantId]
         );
@@ -110,11 +110,11 @@ export class SinpeService {
      * Obtener historial de pagos
      */
     static async getPaymentHistory(tenantId: string, limit: number = 50): Promise<SinpePayment[]> {
-        const { rows } = await pool.query<any[]>(
+        const { rows } = await pool.query(
             `SELECT * FROM sinpe_payments 
-             WHERE tenant_id = ?
+             WHERE tenant_id = $1
              ORDER BY created_at DESC
-             LIMIT ?`,
+             LIMIT $2`,
             [tenantId, limit]
         );
 
@@ -131,13 +131,13 @@ export class SinpeService {
     ): Promise<SinpePayment> {
         await pool.query(
             `UPDATE sinpe_payments 
-             SET status = 'verified', verified_at = NOW(), verified_by = ?, notes = ?
-             WHERE id = ?`,
+             SET status = 'verified', verified_at = CURRENT_TIMESTAMP, verified_by = $1, notes = $2
+             WHERE id = $3`,
             [verifiedBy, notes || null, paymentId]
         );
 
-        const { rows } = await pool.query<any[]>(
-            'SELECT * FROM sinpe_payments WHERE id = ?',
+        const { rows } = await pool.query(
+            'SELECT * FROM sinpe_payments WHERE id = $1',
             [paymentId]
         );
 
@@ -157,13 +157,13 @@ export class SinpeService {
     ): Promise<SinpePayment> {
         await pool.query(
             `UPDATE sinpe_payments 
-             SET status = 'rejected', verified_at = NOW(), verified_by = ?, notes = ?
-             WHERE id = ?`,
+             SET status = 'rejected', verified_at = CURRENT_TIMESTAMP, verified_by = $1, notes = $2
+             WHERE id = $3`,
             [rejectedBy, reason, paymentId]
         );
 
-        const { rows } = await pool.query<any[]>(
-            'SELECT * FROM sinpe_payments WHERE id = ?',
+        const { rows } = await pool.query(
+            'SELECT * FROM sinpe_payments WHERE id = $1',
             [paymentId]
         );
 
@@ -184,9 +184,9 @@ export class SinpeService {
     ): Promise<void> {
         try {
             // Obtener email del admin del tenant
-            const { rows: admins } = await pool.query<any[]>(
+            const { rows: admins } = await pool.query(
                 `SELECT email FROM tenant_users 
-                 WHERE tenant_id = ? AND role = 'admin'
+                 WHERE tenant_id = $1 AND role = 'admin'
                  LIMIT 1`,
                 [tenantId]
             );
@@ -237,11 +237,11 @@ export class SinpeService {
     ): Promise<void> {
         await pool.query(
             `INSERT INTO tenant_settings (tenant_id, sinpe_phone, sinpe_bank, sinpe_holder_name)
-             VALUES (?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE 
-                sinpe_phone = VALUES(sinpe_phone),
-                sinpe_bank = VALUES(sinpe_bank),
-                sinpe_holder_name = VALUES(sinpe_holder_name)`,
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (tenant_id) DO UPDATE SET
+                sinpe_phone = EXCLUDED.sinpe_phone,
+                sinpe_bank = EXCLUDED.sinpe_bank,
+                sinpe_holder_name = EXCLUDED.sinpe_holder_name`,
             [tenantId, phone, bank, holderName]
         );
     }

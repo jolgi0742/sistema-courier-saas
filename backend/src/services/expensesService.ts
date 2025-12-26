@@ -61,10 +61,10 @@ export class ExpensesService {
     static async getUpcoming(tenantId: string, days: number = 30): Promise<RecurringExpense[]> {
         const { rows } = await pool.query(
             `SELECT * FROM recurring_expenses 
-             WHERE tenant_id = ? 
+             WHERE tenant_id = $1 
              AND status = 'active'
              AND next_due_date IS NOT NULL
-             AND next_due_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+             AND next_due_date <= DATE_ADD(CURDATE(), INTERVAL $2 DAY)
              ORDER BY next_due_date ASC`,
             [tenantId, days]
         );
@@ -80,7 +80,7 @@ export class ExpensesService {
         await pool.query(
             `INSERT INTO recurring_expenses (
                 id, tenant_id, name, category, amount, frequency, next_due_date, status, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
             [
                 id,
                 tenantId,
@@ -140,7 +140,7 @@ export class ExpensesService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE recurring_expenses SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
+            `UPDATE recurring_expenses SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -173,7 +173,7 @@ export class ExpensesService {
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                 SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) as paused
-            FROM recurring_expenses WHERE tenant_id = ?`,
+            FROM recurring_expenses WHERE tenant_id = $1`,
             [tenantId]
         );
 
@@ -195,7 +195,7 @@ export class ExpensesService {
                     WHEN frequency = 'yearly' THEN amount
                 END) as totalYearly
             FROM recurring_expenses 
-            WHERE tenant_id = ? AND status = 'active'`,
+            WHERE tenant_id = $1 AND status = 'active'`,
             [tenantId]
         );
 

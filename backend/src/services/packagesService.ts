@@ -71,7 +71,7 @@ export class PackagesService {
         id, tenant_id, tracking_number, client_id,
         sender_name, sender_phone, recipient_name, recipient_phone,
         recipient_address, weight, dimensions, declared_value, status, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13)`,
             [
                 id, input.tenant_id, tracking_number, input.client_id,
                 input.sender_name, input.sender_phone, input.recipient_name, input.recipient_phone,
@@ -139,20 +139,20 @@ export class PackagesService {
         }
 
         if (filters.date_from) {
-            query += ' AND DATE(created_at) >= ?';
-            countQuery += ' AND DATE(created_at) >= ?';
+            query += ' AND DATE(created_at) >= $1';
+            countQuery += ' AND DATE(created_at) >= $2';
             params.push(filters.date_from);
         }
 
         if (filters.date_to) {
-            query += ' AND DATE(created_at) <= ?';
-            countQuery += ' AND DATE(created_at) <= ?';
+            query += ' AND DATE(created_at) <= $3';
+            countQuery += ' AND DATE(created_at) <= $4';
             params.push(filters.date_to);
         }
 
         // Count total
         const { rows: countRows } = await pool.query(countQuery, params) as any;
-        const total = countRows[0]?.total || 0;
+        const total = countRows[0]$5.total || 0;
 
         // Add pagination
         query += ' ORDER BY created_at DESC';
@@ -172,7 +172,7 @@ export class PackagesService {
      */
     static async updateStatus(id: string, tenantId: string, status: string): Promise<Package | null> {
         await pool.query(
-            'UPDATE packages SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?',
+            'UPDATE packages SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND tenant_id = $3',
             [status, id, tenantId]
         );
         return this.getById(id, tenantId);
@@ -183,7 +183,7 @@ export class PackagesService {
      */
     static async assignCourier(id: string, tenantId: string, courierId: string): Promise<Package | null> {
         await pool.query(
-            `UPDATE packages SET courier_id = ?, status = 'assigned', updated_at = NOW() 
+            `UPDATE packages SET courier_id = ?, status = 'assigned', updated_at = CURRENT_TIMESTAMP 
        WHERE id = ? AND tenant_id = ?`,
             [courierId, id, tenantId]
         );
@@ -202,18 +202,18 @@ export class PackagesService {
 
         for (const field of allowedFields) {
             if (data[field as keyof Package] !== undefined) {
-                updates.push(`${field} = ?`);
+                updates.push(`${field} = $1`);
                 values.push(data[field as keyof Package]);
             }
         }
 
         if (updates.length === 0) return this.getById(id, tenantId);
 
-        updates.push('updated_at = NOW()');
+        updates.push('updated_at = CURRENT_TIMESTAMP');
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE packages SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE packages SET ${updates.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -237,7 +237,7 @@ export class PackagesService {
     static async getStats(tenantId: string): Promise<Record<string, number>> {
         const { rows } = await pool.query(
             `SELECT status, COUNT(*) as count FROM packages 
-       WHERE tenant_id = ? GROUP BY status`,
+       WHERE tenant_id = $1 GROUP BY status`,
             [tenantId]
         ) as any;
 

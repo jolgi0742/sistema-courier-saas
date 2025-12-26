@@ -89,7 +89,7 @@ export class WarehouseService {
         await pool.query(
             `INSERT INTO warehouse_locations (
                 id, tenant_id, code, name, zone, capacity, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
                 id,
                 tenantId,
@@ -139,7 +139,7 @@ export class WarehouseService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE warehouse_locations SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE warehouse_locations SET ${fields.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -172,7 +172,7 @@ export class WarehouseService {
         if ((existing as any[]).length > 0) {
             // Remover ubicación anterior
             await pool.query(
-                'UPDATE package_locations SET removed_at = NOW() WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
+                'UPDATE package_locations SET removed_at = CURRENT_TIMESTAMP WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
                 [packageId, tenantId]
             );
         }
@@ -181,7 +181,7 @@ export class WarehouseService {
         await pool.query(
             `INSERT INTO package_locations (
                 id, tenant_id, package_id, location_id
-            ) VALUES (?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4)`,
             [id, tenantId, packageId, locationId]
         );
 
@@ -200,7 +200,7 @@ export class WarehouseService {
      */
     static async removePackage(packageId: string, tenantId: string): Promise<boolean> {
         const { rows: result } = await pool.query(
-            'UPDATE package_locations SET removed_at = NOW() WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
+            'UPDATE package_locations SET removed_at = CURRENT_TIMESTAMP WHERE package_id = ? AND tenant_id = ? AND removed_at IS NULL',
             [packageId, tenantId]
         );
 
@@ -231,7 +231,7 @@ export class WarehouseService {
             FROM package_locations pl
             LEFT JOIN warehouse_locations wl ON pl.location_id = wl.id
             LEFT JOIN packages p ON pl.package_id = p.id
-            WHERE pl.location_id = ? AND pl.tenant_id = ? AND pl.removed_at IS NULL
+            WHERE pl.location_id = $1 AND pl.tenant_id = $2 AND pl.removed_at IS NULL
             ORDER BY pl.assigned_at DESC`,
             [locationId, tenantId]
         );
@@ -251,7 +251,7 @@ export class WarehouseService {
             FROM package_locations pl
             LEFT JOIN warehouse_locations wl ON pl.location_id = wl.id
             LEFT JOIN packages p ON pl.package_id = p.id
-            WHERE p.tracking_number = ? AND pl.tenant_id = ? AND pl.removed_at IS NULL
+            WHERE p.tracking_number = $1 AND pl.tenant_id = $2 AND pl.removed_at IS NULL
             LIMIT 1`,
             [trackingNumber, tenantId]
         );
@@ -268,9 +268,9 @@ export class WarehouseService {
              SET current_packages = (
                  SELECT COUNT(*) 
                  FROM package_locations 
-                 WHERE location_id = ? AND removed_at IS NULL
+                 WHERE location_id = $1 AND removed_at IS NULL
              )
-             WHERE id = ? AND tenant_id = ?`,
+             WHERE id = $2 AND tenant_id = $3`,
             [locationId, locationId, tenantId]
         );
 
@@ -282,7 +282,7 @@ export class WarehouseService {
                  WHEN status = 'full' AND current_packages < capacity THEN 'active'
                  ELSE status
              END
-             WHERE id = ? AND tenant_id = ?`,
+             WHERE id = $1 AND tenant_id = $2`,
             [locationId, tenantId]
         );
     }
@@ -305,7 +305,7 @@ export class WarehouseService {
                 SUM(CASE WHEN status = 'full' THEN 1 ELSE 0 END) as fullLocations,
                 SUM(current_packages) as totalPackages,
                 SUM(capacity) as totalCapacity
-            FROM warehouse_locations WHERE tenant_id = ?`,
+            FROM warehouse_locations WHERE tenant_id = $1`,
             [tenantId]
         );
 

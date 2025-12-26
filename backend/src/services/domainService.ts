@@ -89,7 +89,7 @@ export class DomainService {
         const id = uuidv4();
         await pool.query(
             `INSERT INTO tenant_domains (id, tenant_id, domain_type, domain, is_primary, ssl_status)
-       VALUES (?, ?, 'custom', ?, FALSE, 'pending')`,
+       VALUES ($1, $2, 'custom', $3, FALSE, 'pending')`,
             [id, tenantId, domain.toLowerCase()]
         );
 
@@ -123,7 +123,7 @@ export class DomainService {
             if (records.includes(this.CNAME_TARGET)) {
                 // Marcar como verificado
                 await pool.query(
-                    `UPDATE tenant_domains SET verified_at = NOW(), ssl_status = 'provisioning' WHERE id = ?`,
+                    `UPDATE tenant_domains SET verified_at = CURRENT_TIMESTAMP, ssl_status = 'provisioning' WHERE id = $1`,
                     [domainId]
                 );
 
@@ -154,13 +154,13 @@ export class DomainService {
     static async setPrimary(tenantId: string, domainId: string): Promise<void> {
         // Quitar primary de otros dominios
         await pool.query(
-            'UPDATE tenant_domains SET is_primary = FALSE WHERE tenant_id = ?',
+            'UPDATE tenant_domains SET is_primary = FALSE WHERE tenant_id = $1',
             [tenantId]
         );
 
         // Establecer el nuevo primary
         await pool.query(
-            'UPDATE tenant_domains SET is_primary = TRUE WHERE id = ? AND tenant_id = ?',
+            'UPDATE tenant_domains SET is_primary = TRUE WHERE id = $2 AND tenant_id = $3',
             [domainId, tenantId]
         );
     }
@@ -183,7 +183,7 @@ export class DomainService {
             throw new Error('No se puede eliminar el subdominio principal');
         }
 
-        await pool.query('DELETE FROM tenant_domains WHERE id = ?', [domainId]);
+        await pool.query('DELETE FROM tenant_domains WHERE id = $4', [domainId]);
     }
 
     /**
@@ -192,7 +192,7 @@ export class DomainService {
     static async updateSSLStatus(
         domainId: string,
         status: 'pending' | 'provisioning' | 'active' | 'failed',
-        expiresAt?: Date
+        expiresAt$5: Date
     ): Promise<void> {
         await pool.query(
             `UPDATE tenant_domains SET ssl_status = ?, ssl_expires_at = ? WHERE id = ?`,
@@ -204,7 +204,7 @@ export class DomainService {
      * Validar formato de dominio
      */
     private static isValidDomain(domain: string): boolean {
-        const pattern = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+        const pattern = /^($1:[a-zA-Z0-9]($2:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])$3\.)+[a-zA-Z]{2,}$/;
         return pattern.test(domain);
     }
 

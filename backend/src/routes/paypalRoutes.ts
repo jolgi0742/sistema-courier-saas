@@ -43,8 +43,8 @@ router.post('/create-order', tenantMiddleware, async (req: Request, res: Respons
             tenant_id: tenantId,
             plan_id,
             billing_cycle,
-            return_url: `${process.env.FRONTEND_URL}/account/billing?paypal=success`,
-            cancel_url: `${process.env.FRONTEND_URL}/account/billing?paypal=canceled`
+            return_url: `${process.env.FRONTEND_URL}/account/billing$1paypal=success`,
+            cancel_url: `${process.env.FRONTEND_URL}/account/billing$1paypal=canceled`
         });
 
         res.json({

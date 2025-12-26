@@ -19,9 +19,9 @@ export class NotificationsService {
     static async getNotifications(userId: string, tenantId: string, limit: number = 50) {
         const { rows: notifications } = await pool.query(
             `SELECT * FROM notifications 
-       WHERE user_id = ? AND tenant_id = ? 
+       WHERE user_id = $1 AND tenant_id = $2 
        ORDER BY created_at DESC 
-       LIMIT ?`,
+       LIMIT $3`,
             [userId, tenantId, limit]
         );
         return notifications;
@@ -33,7 +33,7 @@ export class NotificationsService {
         await pool.query(
             `INSERT INTO notifications 
        (id, tenant_id, user_id, title, message, type, category, link, metadata) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
             [
                 id,
                 data.tenant_id,
@@ -58,8 +58,8 @@ export class NotificationsService {
     static async markAsRead(notificationId: string, userId: string) {
         await pool.query(
             `UPDATE notifications 
-       SET is_read = TRUE, read_at = NOW() 
-       WHERE id = ? AND user_id = ?`,
+       SET is_read = TRUE, read_at = CURRENT_TIMESTAMP 
+       WHERE id = $1 AND user_id = $2`,
             [notificationId, userId]
         );
         return { success: true };
@@ -69,8 +69,8 @@ export class NotificationsService {
     static async markAllAsRead(userId: string, tenantId: string) {
         await pool.query(
             `UPDATE notifications 
-       SET is_read = TRUE, read_at = NOW() 
-       WHERE user_id = ? AND tenant_id = ? AND is_read = FALSE`,
+       SET is_read = TRUE, read_at = CURRENT_TIMESTAMP 
+       WHERE user_id = $1 AND tenant_id = $2 AND is_read = FALSE`,
             [userId, tenantId]
         );
         return { success: true };
@@ -81,7 +81,7 @@ export class NotificationsService {
         const { rows: result } = await pool.query(
             `SELECT COUNT(*) as count 
        FROM notifications 
-       WHERE user_id = ? AND tenant_id = ? AND is_read = FALSE`,
+       WHERE user_id = $1 AND tenant_id = $2 AND is_read = FALSE`,
             [userId, tenantId]
         );
         return result[0].count;
@@ -123,7 +123,7 @@ export class NotificationsService {
             user_id: userId,
             title: titles[event] || 'Actualización de paquete',
             message: messages[event] || `Actualización del paquete ${trackingNumber}`,
-            type: event === 'delivered' ? 'success' : event === 'delayed' ? 'warning' : 'info',
+            type: event === 'delivered' $1 'success' : event === 'delayed' $2 'warning' : 'info',
             category: 'package',
             link: `/packages/${packageId}`
         });

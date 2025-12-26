@@ -124,7 +124,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error('Error no manejado:', err);
     res.status(500).json({
         error: 'Error interno del servidor',
-        message: process.env.NODE_ENV === 'development' ? err.message : undefined
+        message: process.env.NODE_ENV === 'development' $1 err.message : undefined
     });
 });
 

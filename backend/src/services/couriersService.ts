@@ -42,7 +42,7 @@ export class CouriersService {
             `INSERT INTO couriers (
         id, tenant_id, name, email, phone, vehicle_type, 
         vehicle_plate, zone, status, commission_rate
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)`,
             [
                 id, input.tenant_id, input.name, input.email, input.phone,
                 input.vehicle_type, input.vehicle_plate || null,
@@ -100,12 +100,12 @@ export class CouriersService {
     /**
      * Obtener couriers disponibles para asignación
      */
-    static async getAvailable(tenantId: string, zone?: string): Promise<Courier[]> {
+    static async getAvailable(tenantId: string, zone$1: string): Promise<Courier[]> {
         let query = `SELECT * FROM couriers WHERE tenant_id = ? AND status = 'active'`;
         const params: any[] = [tenantId];
 
         if (zone) {
-            query += ' AND (zone = ? OR zone IS NULL)';
+            query += ' AND (zone = $1 OR zone IS NULL)';
             params.push(zone);
         }
 
@@ -134,11 +134,11 @@ export class CouriersService {
 
         if (updates.length === 0) return this.getById(id, tenantId);
 
-        updates.push('updated_at = NOW()');
+        updates.push('updated_at = CURRENT_TIMESTAMP');
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE couriers SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE couriers SET ${updates.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -150,7 +150,7 @@ export class CouriersService {
      */
     static async updateStatus(id: string, tenantId: string, status: string): Promise<Courier | null> {
         await pool.query(
-            'UPDATE couriers SET status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?',
+            'UPDATE couriers SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
             [status, id, tenantId]
         );
         return this.getById(id, tenantId);
@@ -163,10 +163,10 @@ export class CouriersService {
         await pool.query(
             `UPDATE couriers SET 
         completed_deliveries = completed_deliveries + 1,
-        balance = balance + ?,
+        balance = balance + $1,
         status = 'active',
-        updated_at = NOW()
-       WHERE id = ? AND tenant_id = ?`,
+        updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND tenant_id = $3`,
             [commission, id, tenantId]
         );
     }
@@ -176,8 +176,8 @@ export class CouriersService {
      */
     static async payBalance(id: string, tenantId: string, amount: number): Promise<void> {
         await pool.query(
-            `UPDATE couriers SET balance = balance - ?, updated_at = NOW() 
-       WHERE id = ? AND tenant_id = ? AND balance >= ?`,
+            `UPDATE couriers SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 AND tenant_id = $3 AND balance >= $4`,
             [amount, id, tenantId, amount]
         );
     }
@@ -188,13 +188,13 @@ export class CouriersService {
     static async getStats(tenantId: string): Promise<Record<string, any>> {
         const { rows: statusRows } = await pool.query(
             `SELECT status, COUNT(*) as count FROM couriers 
-       WHERE tenant_id = ? GROUP BY status`,
+       WHERE tenant_id = $1 GROUP BY status`,
             [tenantId]
         ) as any;
 
         const { rows: topRows } = await pool.query(
             `SELECT id, name, completed_deliveries, rating FROM couriers 
-       WHERE tenant_id = ? ORDER BY completed_deliveries DESC LIMIT 5`,
+       WHERE tenant_id = $1 ORDER BY completed_deliveries DESC LIMIT 5`,
             [tenantId]
         ) as any;
 
@@ -221,7 +221,7 @@ export class CouriersService {
         // Solo eliminar si no tiene paquetes asignados
         const { rows: packages } = await pool.query(
             `SELECT COUNT(*) as count FROM packages 
-       WHERE courier_id = ? AND tenant_id = ? AND status NOT IN ('delivered', 'cancelled')`,
+       WHERE courier_id = $1 AND tenant_id = $2 AND status NOT IN ('delivered', 'cancelled')`,
             [id, tenantId]
         ) as any;
 

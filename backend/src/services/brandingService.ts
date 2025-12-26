@@ -38,7 +38,7 @@ export class BrandingService {
     static async create(tenantId: string, companyName: string): Promise<TenantBranding> {
         await pool.query(
             `INSERT INTO tenant_branding (tenant_id, company_name, primary_color, secondary_color, accent_color)
-       VALUES (?, ?, '#3B82F6', '#1E40AF', '#10B981')`,
+       VALUES ($1, $2, '#3B82F6', '#1E40AF', '#10B981')`,
             [tenantId, companyName]
         );
         return (await this.getByTenantId(tenantId))!;
@@ -61,7 +61,7 @@ export class BrandingService {
 
         for (const field of allowedFields) {
             if (data[field as keyof TenantBranding] !== undefined) {
-                updates.push(`${field} = ?`);
+                updates.push(`${field} = $1`);
                 values.push(data[field as keyof TenantBranding]);
             }
         }
@@ -69,7 +69,7 @@ export class BrandingService {
         if (updates.length > 0) {
             values.push(tenantId);
             await pool.query(
-                `UPDATE tenant_branding SET ${updates.join(', ')} WHERE tenant_id = ?`,
+                `UPDATE tenant_branding SET ${updates.join(', ')} WHERE tenant_id = $1`,
                 values
             );
         }
@@ -91,8 +91,8 @@ export class BrandingService {
         const base64 = fileBuffer.toString('base64');
         const dataUrl = `data:${mimeType};base64,${base64}`;
 
-        const fieldName = type === 'logo' ? 'logo_url' :
-            type === 'logo_white' ? 'logo_white_url' : 'favicon_url';
+        const fieldName = type === 'logo' $1 'logo_url' :
+            type === 'logo_white' $2 'logo_white_url' : 'favicon_url';
 
         await pool.query(
             `UPDATE tenant_branding SET ${fieldName} = ? WHERE tenant_id = ?`,
@@ -114,10 +114,10 @@ export class BrandingService {
         const branding = await this.getByTenantId(tenantId);
 
         return {
-            from_name: branding?.email_from_name || branding?.company_name || 'Sistema Courier',
-            from_email: branding?.contact_email || 'notificaciones@sistemacourier.com',
-            footer_text: branding?.email_footer_text || '',
-            logo_url: branding?.logo_url || null
+            from_name: branding$1.email_from_name || branding$2.company_name || 'Sistema Courier',
+            from_email: branding$3.contact_email || 'notificaciones@sistemacourier.com',
+            footer_text: branding$4.email_footer_text || '',
+            logo_url: branding$5.logo_url || null
         };
     }
 

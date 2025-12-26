@@ -63,7 +63,7 @@ export class DocumentsService {
             FROM documents d
             LEFT JOIN couriers c ON d.entity_type = 'courier' AND d.entity_id = c.id
             LEFT JOIN vehicles v ON d.entity_type = 'vehicle' AND d.entity_id = v.id
-            WHERE d.tenant_id = ?
+            WHERE d.tenant_id = $1
         `;
         const params: any[] = [tenantId];
 
@@ -106,7 +106,7 @@ export class DocumentsService {
             FROM documents d
             LEFT JOIN couriers c ON d.entity_type = 'courier' AND d.entity_id = c.id
             LEFT JOIN vehicles v ON d.entity_type = 'vehicle' AND d.entity_id = v.id
-            WHERE d.id = ? AND d.tenant_id = ?`,
+            WHERE d.id = $1 AND d.tenant_id = $2`,
             [id, tenantId]
         );
         const documents = rows as DocumentWithEntity[];
@@ -142,9 +142,9 @@ export class DocumentsService {
             FROM documents d
             LEFT JOIN couriers c ON d.entity_type = 'courier' AND d.entity_id = c.id
             LEFT JOIN vehicles v ON d.entity_type = 'vehicle' AND d.entity_id = v.id
-            WHERE d.tenant_id = ? 
+            WHERE d.tenant_id = $1 
             AND d.expiration_date IS NOT NULL
-            AND d.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+            AND d.expiration_date <= DATE_ADD(CURDATE(), INTERVAL $2 DAY)
             AND d.status != 'expired'
             ORDER BY d.expiration_date ASC`,
             [tenantId, days]
@@ -163,7 +163,7 @@ export class DocumentsService {
             `INSERT INTO documents (
                 id, tenant_id, entity_type, entity_id, document_type, document_number,
                 file_url, file_name, issue_date, expiration_date, status, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
             [
                 id,
                 tenantId,
@@ -230,7 +230,7 @@ export class DocumentsService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE documents SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND tenant_id = ?`,
+            `UPDATE documents SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -260,7 +260,7 @@ export class DocumentsService {
                  WHEN expiration_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 'expiring_soon'
                  ELSE 'valid'
              END
-             WHERE tenant_id = ?`,
+             WHERE tenant_id = $1`,
             [tenantId]
         );
     }
@@ -283,7 +283,7 @@ export class DocumentsService {
                 SUM(CASE WHEN status = 'valid' THEN 1 ELSE 0 END) as valid,
                 SUM(CASE WHEN status = 'expiring_soon' THEN 1 ELSE 0 END) as expiringSoon,
                 SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired
-            FROM documents WHERE tenant_id = ?`,
+            FROM documents WHERE tenant_id = $1`,
             [tenantId]
         );
 

@@ -32,7 +32,7 @@ export class VehiclesService {
                 c.name as courier_name
             FROM vehicles v
             LEFT JOIN couriers c ON v.assigned_to = c.id
-            WHERE v.tenant_id = ?
+            WHERE v.tenant_id = $1
         `;
         const params: any[] = [tenantId];
 
@@ -57,7 +57,7 @@ export class VehiclesService {
                 c.name as courier_name
             FROM vehicles v
             LEFT JOIN couriers c ON v.assigned_to = c.id
-            WHERE v.id = ? AND v.tenant_id = ?`,
+            WHERE v.id = $1 AND v.tenant_id = $2`,
             [id, tenantId]
         );
         const vehicles = rows as VehicleWithCourier[];
@@ -73,7 +73,7 @@ export class VehiclesService {
         await pool.query(
             `INSERT INTO vehicles (
                 id, tenant_id, plate, brand, model, year, type, assigned_to, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
             [
                 id,
                 tenantId,
@@ -133,7 +133,7 @@ export class VehiclesService {
         values.push(id, tenantId);
 
         await pool.query(
-            `UPDATE vehicles SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            `UPDATE vehicles SET ${fields.join(', ')} WHERE id = $1 AND tenant_id = $2`,
             values
         );
 
@@ -166,7 +166,7 @@ export class VehiclesService {
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                 SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
                 SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
-            FROM vehicles WHERE tenant_id = ?`,
+            FROM vehicles WHERE tenant_id = $1`,
             [tenantId]
         );
 
