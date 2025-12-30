@@ -76,12 +76,12 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         res.json({
             summary: {
                 total_tenants: statusCounts.reduce((sum: number, s: any) => sum + s.count, 0),
-                active_tenants: statusCounts.find((s: any) => s.status === 'active')$1.count || 0,
-                trial_tenants: statusCounts.find((s: any) => s.status === 'trial')$2.count || 0,
+                active_tenants: statusCounts.find((s: any) => s.status === 'active')?.count || 0,
+                trial_tenants: statusCounts.find((s: any) => s.status === 'trial')?.count || 0,
                 mrr: mrrResult[0].mrr || 0,
                 new_this_month: newThisMonth[0].count || 0,
                 churn_rate: churnData[0].active > 0
-                    $6 ((churnData[0].cancelled / churnData[0].active) * 100).toFixed(1)
+                    ? ((churnData[0].cancelled / churnData[0].active) * 100).toFixed(1)
                     : 0
             },
             by_status: statusCounts,

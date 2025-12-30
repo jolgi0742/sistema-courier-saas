@@ -90,7 +90,7 @@ export class EmailService {
             // Log del email enviado
             console.log(`✉️ Email enviado: ${template} a ${to} (tenant: ${tenantId})`);
         } catch (error: any) {
-            console.error('Error enviando email:', error.response$1.body || error.message);
+            console.error('Error enviando email:', error.response?.body || error.message);
             throw new Error('Error enviando email');
         }
     }
@@ -120,7 +120,7 @@ export class EmailService {
             tracking_number: string;
             status: string;
             description: string;
-            estimated_date$1: string;
+            estimated_date?: string;
         }
     ): Promise<void> {
         await this.send({
@@ -200,11 +200,11 @@ export class EmailService {
         ) as any;
         const isEnterprise = tenantRows[0].plan_id === 'enterprise';
 
-        const fromEmail = isEnterprise && branding$3.contact_email
-            $4 branding.contact_email
+        const fromEmail = isEnterprise && branding?.contact_email
+            ? branding.contact_email
             : process.env.SENDGRID_FROM_EMAIL || 'notificaciones@sistemacourier.com';
 
-        const fromName = branding$5.company_name || 'Sistema Courier';
+        const fromName = branding?.company_name || 'Sistema Courier';
 
         await sgMail.send({
             to,
@@ -212,9 +212,9 @@ export class EmailService {
             subject,
             html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${branding$1.logo_url $2 `<img src="${branding.logo_url}" alt="${fromName}" style="max-height: 50px; margin-bottom: 20px;">` : ''}
+          ${branding?.logo_url ? `<img src="${branding.logo_url}" alt="${fromName}" style="max-height: 50px; margin-bottom: 20px;">` : ''}
           ${htmlContent}
-          ${!isEnterprise $1 `
+          ${!isEnterprise ? `
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
               Powered by Sistema Courier
             </div>

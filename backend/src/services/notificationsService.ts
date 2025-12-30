@@ -1,5 +1,5 @@
 // notificationsService.ts - Servicio de notificaciones
-import { pool } from '../config/database';
+import pool from '../config/database';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Notification {
@@ -123,7 +123,7 @@ export class NotificationsService {
             user_id: userId,
             title: titles[event] || 'Actualización de paquete',
             message: messages[event] || `Actualización del paquete ${trackingNumber}`,
-            type: event === 'delivered' $1 'success' : event === 'delayed' $2 'warning' : 'info',
+            type: event === 'delivered' ? 'success' : event === 'delayed' ? 'warning' : 'info',
             category: 'package',
             link: `/packages/${packageId}`
         });

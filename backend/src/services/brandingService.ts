@@ -91,8 +91,8 @@ export class BrandingService {
         const base64 = fileBuffer.toString('base64');
         const dataUrl = `data:${mimeType};base64,${base64}`;
 
-        const fieldName = type === 'logo' $1 'logo_url' :
-            type === 'logo_white' $2 'logo_white_url' : 'favicon_url';
+        const fieldName = type === 'logo' ? 'logo_url' :
+            type === 'logo_white' ? 'logo_white_url' : 'favicon_url';
 
         await pool.query(
             `UPDATE tenant_branding SET ${fieldName} = $1 WHERE tenant_id = $2`,
@@ -114,10 +114,10 @@ export class BrandingService {
         const branding = await this.getByTenantId(tenantId);
 
         return {
-            from_name: branding$1.email_from_name || branding$2.company_name || 'Sistema Courier',
-            from_email: branding$3.contact_email || 'notificaciones@sistemacourier.com',
-            footer_text: branding$4.email_footer_text || '',
-            logo_url: branding$5.logo_url || null
+            from_name: branding?.email_from_name || branding?.company_name || 'Sistema Courier',
+            from_email: branding?.contact_email || 'notificaciones@sistemacourier.com',
+            footer_text: branding?.email_footer_text || '',
+            logo_url: branding?.logo_url || null
         };
     }
 
