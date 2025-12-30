@@ -133,7 +133,7 @@ export class PayPalService {
                 intent: 'CAPTURE',
                 purchase_units: [{
                     reference_id: input.tenant_id,
-                    description: `${planRows[0].name} - ${input.billing_cycle === 'annual' $1 'Anual' : 'Mensual'}`,
+                    description: `${planRows[0].name} - ${input.billing_cycle === 'annual' ? 'Anual' : 'Mensual'}`,
                     amount: {
                         currency_code: 'USD',
                         value: price.toFixed(2)
@@ -162,9 +162,13 @@ export class PayPalService {
         const order = await response.json() as PayPalOrderResponse;
         const approvalLink = order.links.find((link) => link.rel === 'approve');
 
+        if (!approvalLink) {
+            throw new Error('No se pudo obtener URL de aprobación de PayPal');
+        }
+
         return {
             id: order.id,
-            approvalUrl: approvalLink.href || ''
+            approvalUrl: approvalLink.href
         };
     }
 
@@ -208,8 +212,8 @@ export class PayPalService {
                         customData.tenant_id,
                         orderId,
                         customData.plan_id,
-                        captureData.purchase_units[0].payments.captures.[0].amount.value || 0,
-                        captureData.purchase_units[0].payments.captures.[0].amount.currency_code || 'USD',
+                        captureData.purchase_units[0].payments?.captures?.[0]?.amount?.value || 0,
+                        captureData.purchase_units[0].payments?.captures?.[0]?.amount?.currency_code || 'USD',
                         'completed'
                     ]
                 );

@@ -46,7 +46,7 @@ export class ShippersService {
             [id, tenantId]
         );
         const shippers = rows as FrequentShipper[];
-        return shippers.length > 0 $3 shippers[0] : null;
+        return shippers.length > 0 ? shippers[0] : null;
     }
 
     /**

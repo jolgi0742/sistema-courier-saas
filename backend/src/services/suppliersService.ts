@@ -63,7 +63,7 @@ export class SuppliersService {
             [id, tenantId]
         );
         const suppliers = rows as Supplier[];
-        return suppliers.length > 0 $3 suppliers[0] : null;
+        return suppliers.length > 0 ? suppliers[0] : null;
     }
 
     /**
