@@ -111,9 +111,9 @@ export class ClientsService {
 
         // Results
         query += ' ORDER BY name ASC';
-        if (filters$2.limit) {
+        if (filters?.limit) {
             query += ` LIMIT ${filters.limit}`;
-            if (filters.offset) {
+            if (filters?.offset) {
                 query += ` OFFSET ${filters.offset}`;
             }
         }

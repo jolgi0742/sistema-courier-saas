@@ -100,7 +100,7 @@ export class CouriersService {
     /**
      * Obtener couriers disponibles para asignación
      */
-    static async getAvailable(tenantId: string, zone$1: string): Promise<Courier[]> {
+    static async getAvailable(tenantId: string, zone?: string): Promise<Courier[]> {
         let query = `SELECT * FROM couriers WHERE tenant_id = $1 AND status = 'active'`;
         const params: any[] = [tenantId];
 

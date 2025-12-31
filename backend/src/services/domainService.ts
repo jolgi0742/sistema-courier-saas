@@ -192,7 +192,7 @@ export class DomainService {
     static async updateSSLStatus(
         domainId: string,
         status: 'pending' | 'provisioning' | 'active' | 'failed',
-        expiresAt$5: Date
+        expiresAt?: Date
     ): Promise<void> {
         await pool.query(
             `UPDATE tenant_domains SET ssl_status = $1, ssl_expires_at = $2 WHERE id = $3`,
@@ -204,7 +204,7 @@ export class DomainService {
      * Validar formato de dominio
      */
     private static isValidDomain(domain: string): boolean {
-        const pattern = /^($1:[a-zA-Z0-9]($2:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])$3\.)+[a-zA-Z]{2,}$/;
+        const pattern = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
         return pattern.test(domain);
     }
 
