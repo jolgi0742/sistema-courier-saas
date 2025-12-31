@@ -23,7 +23,7 @@ router.get('/by-subdomain/:subdomain', async (req: Request, res: Response) => {
         const branding = await BrandingService.getByTenantId(tenant.id);
 
         // Obtener plan
-        const [planRows] = await (await import('../config/database')).default.execute(
+        const { rows: planRows } = await (await import('../config/database')).default.query(
             'SELECT * FROM plans WHERE id = $1',
             [tenant.plan_id]
         ) as any;
@@ -71,7 +71,7 @@ router.get('/by-domain/:domain', async (req: Request, res: Response) => {
         const branding = await BrandingService.getByTenantId(tenant.id);
 
         // Obtener plan
-        const [planRows] = await (await import('../config/database')).default.execute(
+        const { rows: planRows } = await (await import('../config/database')).default.query(
             'SELECT * FROM plans WHERE id = $1',
             [tenant.plan_id]
         ) as any;
