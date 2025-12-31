@@ -46,10 +46,10 @@ export class ManifestsService {
     /**
      * Obtener todos los manifiestos
      */
-    static async getAll(tenantId: string, filters$1: {
-        status$2: string;
-        courierId$3: string;
-        date$4: string;
+    static async getAll(tenantId: string, filters?: {
+        status?: string;
+        courierId?: string;
+        date?: string;
     }): Promise<ManifestWithDetails[]> {
         let query = `
             SELECT 
@@ -61,17 +61,17 @@ export class ManifestsService {
         `;
         const params: any[] = [tenantId];
 
-        if (filters$1.status) {
+        if (filters?.status) {
             query += ' AND cm.status = $2';
             params.push(filters.status);
         }
 
-        if (filters$3.courierId) {
+        if (filters?.courierId) {
             query += ' AND cm.courier_id = $4';
             params.push(filters.courierId);
         }
 
-        if (filters$5.date) {
+        if (filters?.date) {
             query += ' AND cm.date = $6';
             params.push(filters.date);
         }

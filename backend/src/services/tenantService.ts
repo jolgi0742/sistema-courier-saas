@@ -204,9 +204,9 @@ export class TenantService {
 
         // Add pagination
         query += ' ORDER BY created_at DESC';
-        if (filters$1.limit) {
+        if (filters?.limit) {
             query += ` LIMIT ${filters.limit}`;
-            if (filters$1.offset) {
+            if (filters?.offset) {
                 query += ` OFFSET ${filters.offset}`;
             }
         }
